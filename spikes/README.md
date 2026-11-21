@@ -34,6 +34,7 @@ date: 2026-11-07
 | [0120: Resident keys, user presence and user verification in the virtual CTAP authenticator](0120-resident-keys-presence-and-uv.md) | Yes for resident keys, UV and one signature per request in Chromium, Chrome and Firefox (also as Snaps); Partly for presence: a click is forgeable by a process of the same user, a sensor gesture is not; Partly for the provider choice | [#120](https://github.com/LinuxHello/linux-hello/issues/120) |
 | [0033: Own browser extension in front of the broker: trusted origin, and native messaging from confined browsers](0033-own-extension-origin-and-confined-native-messaging.md) | Open (source read: Partly; origin solvable by design, confined Firefox needs the native-messaging proxy, untested on Plasma) | [#33](https://github.com/LinuxHello/linux-hello/issues/33) |
 | [0311: Linux Hello's login screen as a QML greeter for greetd](0311-greetd-greeter.md) | Open: not run yet | [#311](https://github.com/LinuxHello/linux-hello/issues/311) |
+| [0317: How a screen part finds and follows the PAM module's prompt](0317-prompt-discovery.md) | Yes on paper, with three interface changes (a `WatchPrompts` call and `PromptStarted` signal, a greeter told only of login prompts, only the opener may change a prompt); the VM run with greetd is still to do | [#317](https://github.com/LinuxHello/linux-hello/issues/317) |
 
 New spikes start from [the template](../templates/spike.md). See [index](../README.md).
 
