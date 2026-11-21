@@ -6,7 +6,7 @@ status: accepted
 owner: "@atterdag"
 concepts: [dbus, system-bus, pam, agent, one-way-door]
 tags: [adr, one-way-door, dbus]
-sources: ["../spikes/0007-pam-dbus-method-state.md", "../spikes/0009-plasma-prompt-component.md", "../spikes/0094-virtual-ctap-end-to-end.md", "0012-dbus-names.md", "../arc42/07-deployment-view.md", "../workspace.dsl"]
+sources: ["../spikes/0007-pam-dbus-method-state.md", "../spikes/0009-plasma-prompt-component.md", "../spikes/0094-virtual-ctap-end-to-end.md", "0012-dbus-names.md", "../arc42/07-deployment-view.md", "../workspace.dsl", "../spikes/0317-prompt-discovery.md"]
 date: 2026-11-08
 ---
 
@@ -14,7 +14,7 @@ date: 2026-11-08
 
 ## Status
 
-Accepted, 2026-11-08, on the maintainer's decision the same day (proposed 2026-11-08). Amendment accepted 2026-11-16, on the maintainer's decision the same day: what identifies a caller (see *Amendment 2026-11-16*); it changes the *Policy* point and is the answer to [linux-hello#162](https://github.com/LinuxHello/linux-hello/issues/162). Amendment accepted 2026-11-17, on the maintainer's decision the same day (proposed 2026-11-17): the errors, the result and the contract of the interface (see *Amendment 2026-11-17*), the answer to [linux-hello#156](https://github.com/LinuxHello/linux-hello/issues/156).
+Accepted, 2026-11-08, on the maintainer's decision the same day (proposed 2026-11-08). Amendment accepted 2026-11-16, on the maintainer's decision the same day: what identifies a caller (see *Amendment 2026-11-16*); it changes the *Policy* point and is the answer to [linux-hello#162](https://github.com/LinuxHello/linux-hello/issues/162). Amendment accepted 2026-11-17, on the maintainer's decision the same day (proposed 2026-11-17): the errors, the result and the contract of the interface (see *Amendment 2026-11-17*), the answer to [linux-hello#156](https://github.com/LinuxHello/linux-hello/issues/156). Amendment accepted 2026-11-22 on the maintainer's standing approval of the lead's recommendations: screens learn of a prompt by a signal, and only its opener may change it (see *Amendment 2026-11-22*), the answer to [linux-hello#317](https://github.com/LinuxHello/linux-hello/issues/317).
 
 ## Context
 
@@ -74,6 +74,19 @@ Test names the code will use: `every_error_has_a_fixed_name_and_text`, `invalid_
 **Harder (amendment):** more members to confine and test (each is on the interface the profile already names); the error names are a second vocabulary clients must learn once; `Result` and `ActiveMethod` change shape, which is only free until the first client ships.
 
 Decided in other ADRs: the status method ([ADR-0024](0024-agent-status-interface.md), accepted 2026-11-17) and the control call for the PIN socket, `ExpectPin(prompt_id)` ([ADR-0021](0021-pin-transport.md), amendment 2026-11-18).
+
+### Amendment 2026-11-22 (accepted): screens learn of a prompt by a signal, and only its opener may change it
+
+Linux Hello's login screen and its part in KDE's lock screen show live tiles for the fingerprint, the face and the PIN ([ADR-0016](0016-prompt-hosts.md), amendment of 2026-11-21). For that they must follow the prompt (the Agent's word for one sign-in attempt) that the PAM module opened, the module that the login service and the lock screen load to check a person. They cannot: the prompt's id includes a value only the module knows, and no call says that a prompt was opened. [Spike 0317](../spikes/0317-prompt-discovery.md) read the access rules as built and found two more gaps: a *prompt host*, the account of a login screen's greeter, may read every prompt that root opened, `sudo`'s among them; and any program of a user may report a state on that user's prompt or close it, which on a live screen shows a false state or ends the attempt.
+
+In plain words: the Agent now tells a screen when a sign-in that it may show starts, tells a greeter only about logins, and lets only the program that started an attempt change or end it.
+
+1. **`WatchPrompts()`** registers the calling connection as a watcher, at most four per user; another call from the same connection changes nothing. It ends when the connection leaves the bus.
+2. **`PromptStarted(s prompt_id, s context)`**, a unicast signal, is sent to each watcher that may read the prompt when `Authenticate` starts it: to a watcher of the uid that opened it, and to a watcher whose uid is a prompt host when root opened it and the context is `login`. Nobody else is told, and a prompt host is never told about `sudo`, `unlock`, `session` or a prompt a user opened. The watcher then calls `Subscribe` as before.
+3. **Only the opener may change a prompt.** `ReportState` and `ClosePrompt` are refused with `Denied`, the same text as for a prompt that does not exist, from any connection but the one that opened the prompt. This replaces the sentence "Reporting, closing and subscribing are not tied to the connection" of the amendment of 2026-11-16 for reporting and closing; subscribing and reading are unchanged.
+4. **Not decided here:** where the Agent reads the list of prompt hosts (today it has none), which the greeter's issue decides.
+5. **Built and tested** together with this amendment for the rules above, on a private bus; **not yet tested** under a real greetd and KDE's lock screen (point 5 of spike 0317).
+6. **Tests the code names:** `a_watcher_is_told_when_its_own_prompt_starts`, `a_prompt_host_is_told_only_about_root_logins`, `only_the_opener_may_report_or_close_a_prompt`, `watchers_are_limited_per_user`.
 
 ## Consequences
 
