@@ -29,14 +29,7 @@ What this means for the proposals:
 
 ## Where the proposals are
 
-All proposals are on one design canvas: [Linux Hello on Plasma — UI proposals](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij). The link is private to the maintainer's account until it is shared from the page. The canvas has four pages:
-
-| Page | What you find there |
-| :-- | :-- |
-| [Read me and recommendation](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-overview) | How to read a proposal, the terms used, what was checked in KDE's and SDDM's source code, and the recommendation per place. |
-| [Login screen (SDDM)](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-login) | Four proposals: three for SDDM, the login screen Plasma uses, and one for Linux Hello's own login screen under greetd (proposal D, chosen). |
-| [Lock screen](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-lock) | Three proposals for kscreenlocker, Plasma's lock screen. |
-| [System Settings page](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-settings) | Two proposals for Linux Hello's own page in System Settings (a KCM, a KDE Configuration Module), each with a table of the Agent calls it needs. |
+The mockups are in this repository, one image per proposal, under [ui-proposals-2026-11/](ui-proposals-2026-11/); the section [The mockups](#the-mockups) below shows them. They were drawn on a design canvas, [Linux Hello on Plasma — UI proposals](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij), which is the editable original. That link is private to the maintainer's account until it is shared from the page; the images here are the record that everyone can read. The canvas also has a "Read me" board (terms, what was checked in the source) and a recommendation board, whose content is in this note.
 
 Every login and lock-screen proposal shows the same nine screens in the same order, so they can be compared square by square: the question while PIN, fingerprint and face all run; a finger or face being checked; success; a wrong PIN; a finger or face not recognised; a lockout; Linux Hello unavailable, so the account password is asked; a condition before sign-in (the TPM, the Trusted Platform Module that holds the PIN's key, was cleared); and a condition after sign-in (the PIN expires soon). A *condition* is a fact that the Agent, Linux Hello's system service, reports with a severity and one fixed sentence ([ADR-0024](../adr/0024-agent-status-interface.md)).
 
@@ -55,6 +48,46 @@ Each login and lock-screen proposal is tagged with what it needs: only the PAM t
 | Lock screen | C. Shared prompt in the lock screen | KDE adds a slot for a method-state part; Linux Hello's Auth Prompt sits there. | A change in KDE. |
 | System Settings | A. One page | Status, PIN, fingerprint, face and a table of where each method works, on one scrolling page; sheets for changing the PIN and setting up the face. | Existing Agent calls, plus new ones for fingerprint and face enrolment, the PIN state and the reset (the calls table on the board). |
 | System Settings | B. Overview with subpages | One card per method and a subpage behind each, with three first-run steps when no PIN is set. | The same Agent calls as A, existing and new. |
+
+## The mockups
+
+Each image is one proposal, drawn as it would look on a Plasma desktop with a person called Alex. The top of each image says the idea, the trade-off and what the proposal needs that does not exist yet; below are the screens, each with a short caption that says what happens and whether it was verified in the source or is a proposal. The images were rendered from the design canvas on 2026-11-22. The top of each image is the proposal's full description; the table above is its summary.
+
+### Login screen
+
+The four images below are the login-screen proposals A to D. Read them side by side: square 1 of each shows the same moment, the question with all three methods running.
+
+![Login proposal A: Linux Hello's own SDDM theme shows the PAM module's lines under the field, in nine states from the question to a condition after sign-in](ui-proposals-2026-11/login-a.png)
+
+![Login proposal B: the same SDDM theme with a row of method tiles for PIN, fingerprint and face that follows the Agent's state, in nine states](ui-proposals-2026-11/login-b.png)
+
+![Login proposal C: a changed SDDM that shows the module's question and starts the methods when an account is picked, with a ring around the picture while it checks, in nine states](ui-proposals-2026-11/login-c.png)
+
+![Login proposal D, chosen: Linux Hello's own greeter for greetd, with the module's question above the field, coloured cards for information and errors, and a desktop menu that also starts GNOME, in nine states](ui-proposals-2026-11/login-d.png)
+
+What to notice: only proposals C and D can show the module's own question, because SDDM answers it itself, and only D needs no change by anyone else. In A and B the condition after sign-in (square 9) cannot be seen on the login screen at all, which is why B shows it as a notification in the session.
+
+### Lock screen
+
+The three images below are the lock-screen proposals A to C, in the same nine states as the login screen.
+
+![Lock proposal A, used until KDE ships the slot: pam_linuxhello inside KDE's password service, with the module's question and lines in the lock screen's text line under a field labelled Password](ui-proposals-2026-11/lock-a.png)
+
+![Lock proposal B: KDE's own fingerprint and face rows on Plasma 6.8, each run by pam_linuxhello for one method, with the PIN in the password service](ui-proposals-2026-11/lock-b.png)
+
+![Lock proposal C, chosen: the shared method tiles in a slot of KDE's lock screen, live from the moment the screen appears](ui-proposals-2026-11/lock-c.png)
+
+What to notice: A works today but keeps KDE's "Password" label and shows plain text; C looks like login proposal B and D's method tiles but needs KDE to add the slot. The maintainer chose C as the goal and A until then.
+
+### System Settings
+
+The two images below are the proposals for Linux Hello's page in System Settings. Each shows the page itself, the sheets that open from it, and a table of the Agent calls the page needs.
+
+![Settings proposal A, chosen: one scrolling page with the conditions, the PIN and its rules, fingerprints, the face and a table of where each method works, with padlocks for what the administrator manages; below it the sheets for changing the PIN and setting up the face, and the table of Agent calls](ui-proposals-2026-11/kcm-a.png)
+
+![Settings proposal B: an overview with one card per method, a first-run step for choosing a PIN, a PIN subpage during a lockout, and a subpage of where each method works](ui-proposals-2026-11/kcm-b.png)
+
+What to notice: both proposals need the same Agent calls, and the ones marked "Missing" in the table of proposal A (whether a PIN is set, fingerprint and face enrolment, the reset) are new backlog issues, starting with the ADR in [linux-hello#312](https://github.com/LinuxHello/linux-hello/issues/312).
 
 ## Recommendation
 

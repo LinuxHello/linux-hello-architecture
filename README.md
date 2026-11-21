@@ -20,6 +20,7 @@ The content moved here from `linux-hello` at commit [`3212f15`](https://github.c
 | [diagrams/](diagrams/README.md) | SVG renderings of every C4 view, generated from `workspace.dsl` |
 | [adr/](adr/README.md) | Architecture decision records |
 | [spikes/](spikes/README.md) | Spikes that test the assumptions the architecture rests on |
+| [notes/](notes/) | Design notes that are neither an ADR nor a spike: [the UI proposals of November 2026](notes/ui-proposals-2026-11.md), with a mockup image of every proposal for the login screen, the lock screen and the System Settings page |
 | [templates/](templates/) | Templates for ADRs, spikes and notes |
 | [scripts/](scripts/) | `check-docs.py` (the `notes` check), `render-diagrams.sh` (the SVGs), and the scripts that pick and mirror the pinned Structurizr image (`resolve-image.sh`, `mirror-image.sh`) |
 
