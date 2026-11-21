@@ -49,6 +49,7 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
 
             plasma = container "Plasma Integration" "Prompts, greeter and lock-screen integration, enrolment and settings" "Rust/cxx-qt, QML, KCM" {
                 authPrompt = component "Auth Prompt QML Component" "Shared method indicator and switcher; renders Agent auth state (UX1-UX5). One QML module in the system QML directory, imported by every host below (spike 0009)" "QML"
+                lockPrompt = component "Lock Screen Prompt" "Linux Hello's shared prompt in a slot of KDE's lock screen, showing the live state of every method. Needs KDE to add the slot; until then the lock screen shows only the PAM module's text. Talks only to the Agent through the shared prompt; runs no command (ADR-0016, amendment of 2026-11-21). Not built" "QML"
                 promptUi = component "Prompt UI" "In-session presence, verification and credential/provider-choice dialogs, outside the calling app. Shows the relying-party id from the request and labels from the Credential Index, never client text; confined process (own AppArmor profile, not dumpable) started by the Agent; a click is never a verification (spike 0120, ADR-0020)" "QML"
                 greeter = component "Linux Hello Greeter" "Linux Hello's own login screen: a greeter for greetd that shows every PAM question and line with its kind, lists the installed desktops from the session files and starts the chosen one. Talks only to greetd's socket and, through the shared prompt, to the Agent; runs no command. Decided in ADR-0016 (amendment of 2026-11-21) if spike 0311 confirms it, otherwise an own SDDM theme. Not built" "QML"
                 kcm = component "Linux Hello Settings Module" "Own settings page next to Users in System Settings (kcm_users has no extension point, spike 0010): methods, policy (UX7a)" "KCM, QML"
@@ -112,12 +113,14 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
         browsers -> relyingParties "WebAuthn ceremonies" "HTTPS"
         uhid -> ctapHelper "Delivers CTAP2 reports" "/dev/uhid"
         greetd -> linuxPam "Authenticates via" "PAM"
-        lockScreen -> linuxPam "Authenticates via the stock kde, kde-face and kde-fingerprint services; text only on 6.8, inside the kde service on 6.6 (ADR-0016)"
+        lockScreen -> linuxPam "Authenticates via PAM and shows the PAM module's text (ADR-0016, amendment of 2026-11-21)" "PAM"
 
         # KDE integration
         greetd -> greeter "Starts the greeter; passes each PAM question and line with its kind" "greetd IPC, unix socket"
         greeter -> greetd "Answers PAM questions, starts the chosen desktop" "greetd IPC, unix socket"
         greeter -> authPrompt "Embeds"
+        lockScreen -> lockPrompt "Shows in a slot of its lock screen; needs a change in KDE" "QML"
+        lockPrompt -> authPrompt "Embeds"
         promptUi -> authPrompt "Embeds"
         authPrompt -> dbusApi "Subscribes to auth state, selects method, over the system bus (ADR-0014)" "D-Bus"
         systemSettings -> kcm "Hosts" "KCM"
