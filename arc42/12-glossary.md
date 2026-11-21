@@ -248,6 +248,10 @@ The way a PAM module talks to the user: it can only send text to show and ask fo
 
 The answer a PAM module gives. `PAM_SUCCESS` means the user is authenticated. `PAM_AUTHINFO_UNAVAIL` means "this module cannot decide", so PAM moves on to the next module. `pam_linuxhello` returns `PAM_AUTHINFO_UNAVAIL` whenever Linux Hello is not working, which lets the account password take over.
 
+### polkit
+
+The Linux service that decides whether a program may do a privileged action on behalf of a user, and, when the rule says so, asks the person for their password in a dialog of the desktop. Linux Hello's Agent asks polkit before the reset after a forgotten PIN, so that the person proves who they are with the account password, which the Agent never sees ([ADR-0027](../adr/0027-settings-page-calls.md)).
+
 ### PipeWire
 
 The Linux service for audio and video streams, through which desktop programs reach the camera. Linux Hello's own preview of the camera, which would use it, is not part of 1.0.
@@ -337,6 +341,10 @@ The Agent's list of the user's *discoverable credentials*: for each passkey, its
 ### Destructive reset
 
 What happens when the user forgets the PIN. With the account or administrator password, the user deletes the *root key* and sets a new PIN; every device-bound passkey under the old root key is lost and must be registered again with each website. There is no recovery key ([ADR-0003](../adr/0003-destructive-reset.md)). Windows Hello's default reset works the same way.
+
+### Enrolment progress
+
+The steps of enrolling a finger or a face that the Agent reports while it runs, such as "touch again" or "lift the finger", each as a word of a closed set in the `EnrolProgress` signal ([ADR-0027](../adr/0027-settings-page-calls.md)).
 
 ### Factor
 
