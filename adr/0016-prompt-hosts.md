@@ -82,7 +82,7 @@ greetd is a small login service that runs PAM and starts the chosen desktop as t
 
 Not decided here: what runs on the lock screen until KDE ships the slot (the UI proposals recommend option A of this ADR's first table, `pam_linuxhello` in the `kde` service on Plasma 6.6 and 6.8, if KDE's own fingerprint service can be kept off the sensor, which was not verified); which small compositor shows the greeter; how the greeter and the lock screen's part learn the id of the prompt that the PAM module opened, and may subscribe to it; and the full list of what a login screen must do besides signing in (keyboard layout, screen reader, shutdown, more than one monitor), which spike 0311 collects.
 
-**Consequences of the amendment.** Linux Hello owns a login screen and its accessibility and translations, and is supported only for people who switch to greetd. `workspace.dsl` replaces the `SDDM Theme` component with a greetd greeter, and the runtime view of a login in [section 6](../arc42/06-runtime-view.md) changes from SDDM to greetd; both follow once spike 0311 has answered. Until KDE ships the slot, the lock screen shows only PAM text.
+**Consequences of the amendment.** Linux Hello owns a login screen and its accessibility and translations, and is supported only for people who switch to greetd. `workspace.dsl` and [section 5](../arc42/05-building-block-view.md) replace the `SDDM Theme` component with the `Linux Hello Greeter` and the SDDM login manager with greetd; if spike 0311 answers no, they go back. The runtime view of a login in [section 6](../arc42/06-runtime-view.md) changes from SDDM to greetd once spike 0311 has answered. Until KDE ships the slot, the lock screen shows only PAM text.
 
 ## Consequences
 
