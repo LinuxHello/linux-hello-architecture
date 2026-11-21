@@ -29,7 +29,7 @@ An architecture decision record (ADR) is a short note that records one decision 
 - [ADR-0013: Browser path for 1.0](0013-browser-fallback.md) (superseded by ADR-0017): an earlier plan for a browser extension of Linux Hello's own.
 - [ADR-0014: The Agent's bus](0014-agent-bus.md): the Agent is one system service on the D-Bus system bus and tells each caller only about its own sign-in attempts.
 - [ADR-0015: Face capture, enrolment and preview](0015-face-capture-and-enrolment.md): Howdy is run as it is, and there is no live camera picture in 1.0.
-- [ADR-0016: Where the authentication prompt is shown](0016-prompt-hosts.md): one shared prompt; since the amendment of 2026-11-21, the login screen is Linux Hello's own greeter for greetd (if spike 0311 confirms it), and the lock screen gets Linux Hello's prompt in a slot that KDE is asked to add.
+- [ADR-0016: Where the authentication prompt is shown](0016-prompt-hosts.md): one shared prompt; since the amendment of 2026-11-21, the login screen is Linux Hello's own greeter for greetd (if spike 0311 confirms it), and the lock screen gets Linux Hello's prompt in a slot that KDE is asked to add, with `pam_linuxhello` in KDE's password service until then.
 - [ADR-0017: Browser path for 1.0, after ADR-0005 option B](0017-browser-path.md): browsers reach Linux Hello only as a security key in 1.0; no extension.
 - [ADR-0018: Where the user layer of the routing policy lives](0018-user-policy-layer.md): each user's rules are kept by the Agent and changed over D-Bus, not read from the home directory.
 - [ADR-0019: A shared memory for the coding agents](0019-shared-agent-memory.md) (proposed): a memory service for the AI agents that returns evidence with its source, never a verdict.

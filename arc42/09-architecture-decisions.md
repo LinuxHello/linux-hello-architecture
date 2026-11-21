@@ -66,7 +66,7 @@ These ADRs decide how Linux Hello works. Each row says in one sentence what the 
 | ADR | What it decides | Status |
 | :-- | :-- | :-- |
 | [ADR-0023](../adr/0023-pam-module-and-login-failure.md) | The PAM module stays small and only asks the Agent; when Linux Hello cannot answer, the login falls through to the account password. | accepted |
-| [ADR-0016](../adr/0016-prompt-hosts.md) | One shared prompt component. Since the amendment of 2026-11-21: the login screen is a greeter of Linux Hello's own for greetd, a small login service, if spike 0311 confirms it works; the lock screen gets Linux Hello's prompt in a slot that KDE is asked to add, and Linux Hello writes no lock screen of its own. | accepted |
+| [ADR-0016](../adr/0016-prompt-hosts.md) | One shared prompt component. Since the amendment of 2026-11-21: the login screen is a greeter of Linux Hello's own for greetd, a small login service, if spike 0311 confirms it works; the lock screen gets Linux Hello's prompt in a slot that KDE is asked to add, and until then runs `pam_linuxhello` inside KDE's password service, showing its text. Linux Hello writes no lock screen of its own. | accepted |
 | [ADR-0015](../adr/0015-face-capture-and-enrolment.md) | Linux Hello runs Howdy as it is for face checks and face setup, and shows no live camera picture in version 1.0. | accepted |
 
 **Keys, PIN and rules**

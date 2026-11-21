@@ -74,7 +74,7 @@ What follows from the choice:
 
 - **ADR-0016 is amended.** Login D replaces its decision 3 (an own SDDM theme), and lock C replaces its decision 2 (KDE's stock services on Plasma 6.8, with the slot only as a later proposal to KDE). The [amendment of 2026-11-21](../adr/0016-prompt-hosts.md) records both.
 - **Login D first needs a spike**: the [spike brief](../spikes/0311-greetd-greeter.md), tracked in [linux-hello#311](https://github.com/LinuxHello/linux-hello/issues/311), asks whether a QML greeter under greetd signs a person in with `pam_linuxhello` to Plasma and another desktop and shows every question and message with its kind.
-- **The lock screen needs an answer until KDE ships the slot.** Proposal C cannot ship before KDE accepts and releases the change. Until then something must run on the lock screen; proposal A is the one that works today, on Plasma 6.6 and 6.8.
+- **Until KDE ships the slot, the lock screen uses proposal A** (the maintainer's decision of 2026-11-22): `pam_linuxhello` in KDE's `kde` password service, on Plasma 6.6 and 6.8. Open: how KDE's own fingerprint and face services are kept off the sensor and camera on 6.8 (open question 7).
 - **Settings A depends on open question 10**: the new Agent calls for fingerprint and face enrolment, the PIN state and the reset.
 - **Not done yet:** the ADR for the `plasma` container that records these choices, and the changes to `workspace.dsl` and section 8 that follow.
 

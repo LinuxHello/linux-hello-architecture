@@ -113,7 +113,7 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
         browsers -> relyingParties "WebAuthn ceremonies" "HTTPS"
         uhid -> ctapHelper "Delivers CTAP2 reports" "/dev/uhid"
         greetd -> linuxPam "Authenticates via" "PAM"
-        lockScreen -> linuxPam "Authenticates via PAM and shows the PAM module's text (ADR-0016, amendment of 2026-11-21)" "PAM"
+        lockScreen -> linuxPam "Authenticates via the kde service, where pam_linuxhello runs every method; shows the module's text until KDE ships the slot, on Plasma 6.6 and 6.8 (ADR-0016, amendment of 2026-11-21, point 7)" "PAM"
 
         # KDE integration
         greetd -> greeter "Starts the greeter; passes each PAM question and line with its kind" "greetd IPC, unix socket"

@@ -222,7 +222,7 @@ A free password manager that keeps passwords and, since version 2.7.7, passkeys 
 
 ### kscreenlocker
 
-KDE Plasma's lock screen. Linux Hello writes no lock screen of its own, because on Wayland only the locker the compositor trusts can lock safely. Instead it asks KDE for a slot in this lock screen where Linux Hello's prompt can sit; until KDE ships one, the lock screen shows the PAM module's text ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21).
+KDE Plasma's lock screen. Linux Hello writes no lock screen of its own, because on Wayland only the locker the compositor trusts can lock safely. Instead it asks KDE for a slot in this lock screen where Linux Hello's prompt can sit; until KDE ships one, `pam_linuxhello` runs inside KDE's `kde` password service and the lock screen shows the module's text ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21).
 
 ### KWallet
 
