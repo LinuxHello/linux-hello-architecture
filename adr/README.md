@@ -40,5 +40,6 @@ An architecture decision record (ADR) is a short note that records one decision 
 - [ADR-0024: The Agent's status interface](0024-agent-status-interface.md): the Agent says in words what is wrong for the caller, and shows file names to root only.
 - [ADR-0025: One virtual security key per user and active session](0025-virtual-key-per-user-session.md) (proposed; amends ADR-0017): the virtual security key belongs to one user and exists only while that user's session is in front and unlocked.
 - [ADR-0026: Clients reach the Agent directly, never through a command](0026-clients-reach-the-agent-directly.md) (accepted): every Linux Hello client, from `linuxhello-ctl` to the lock screen and the System Settings page, talks to the Agent over its own bus connection and the PIN socket, and starts no program and no shell.
+- [ADR-0027: The Agent calls of the settings page](0027-settings-page-calls.md) (accepted): the calls that let System Settings show the PIN, add and remove fingers and the face (only after the PIN), and reset after a forgotten PIN (only after the account password, through polkit).
 
 New ADRs start from [the template](../templates/adr.md).
