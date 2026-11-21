@@ -16,6 +16,17 @@ Linux Hello lets a person sign in to a Linux desktop with a PIN, a fingerprint o
 
 **State:** nothing here is built. The proposals are mockups in a Plasma-like style; they use no KDE logo and are not KDE's design.
 
+## The rule every proposal follows: no screen part runs a command
+
+The maintainer's requirement is that no part of Linux Hello's user interface starts a shell or any other program: not `linuxhello-ctl`, `busctl`, `fprintd-enroll`, `howdy` or anything else. A screen part talks to the Agent directly, over its D-Bus interface `io.github.LinuxHello.Agent1`, and sends a PIN only over the Agent's PIN socket ([ADR-0021](../adr/0021-pin-transport.md)). There are three reasons. Starting a program for every action is slow. Every extra program is more code that an attacker can use. And a program found by name through `PATH`, the list of folders the system searches, can be replaced by a fake one that sits between the screen and the Agent and reads or changes what passes. Any design that needs a helper command is therefore out, and every proposal names the Agent calls it uses.
+
+What this means for the proposals:
+
+- **Login and lock screens.** In every proposal the PAM module makes the Agent calls, all of which exist: `OpenPrompt`, `Subscribe`, `Authenticate`, `GetPromptStatus`, `ExpectPin` with the PIN on the PIN socket, and `ClosePrompt`. Login proposal B and lock proposal C also call `Ping`, `Subscribe` and `GetState` from the screen itself and listen to the prompt's signals. None of them runs a program.
+- **System Settings.** The page uses `GetStatus`, `GetPinRules`, `GetEffectivePolicy`, `GetUserPolicy`, `SetUserPolicy`, and `OpenPrompt` with `SetPin` or `ChangePin`, `ExpectPin` and `ClosePrompt`, which exist. Enrolling fingers and setting up the face need **new Agent calls**, because the page may not run `fprintd-enroll` or `howdy add` itself. Whether a PIN is set and the reset after a forgotten PIN need new calls too. The calls table on the board names placeholders such as `EnrolFingerprint` and `EnrolFace`; their names and shapes are not decided.
+- **Fingerprint setup moves into Linux Hello's page.** The earlier plan (UX7 in [section 8](../arc42/08-user-experience.md)) was to link to KDE's own fingerprint window on the Users page. Under this rule the page enrols fingers through the Agent instead.
+- **Sentences that name a command.** `pin-expires-soon` and `pin-expired` say "Change it with linuxhello-ctl pin change." A screen shows its own words for these codes, such as "Change it in System Settings", and never runs the command.
+
 ## Where the proposals are
 
 All proposals are on one design canvas: [Linux Hello on Plasma — UI proposals](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij). The link is private to the maintainer's account until it is shared from the page. The canvas has four pages:
@@ -41,8 +52,8 @@ Each login and lock-screen proposal is tagged with what it needs: only the PAM t
 | Lock screen | A. Inside the password service | `pam_linuxhello`, Linux Hello's PAM module, runs all methods inside KDE's `kde` PAM service; the lock screen prints its lines. | PAM text only. |
 | Lock screen | B. KDE's own method rows | On Plasma 6.8, `pam_linuxhello` runs in `kde`, `kde-fingerprint` and `kde-face`, each limited to one method; KDE draws the rows. | PAM text only, plus a new module argument. |
 | Lock screen | C. Shared prompt in the lock screen | KDE adds a slot for a method-state part; Linux Hello's Auth Prompt sits there. | A change in KDE. |
-| System Settings | A. One page | Status, PIN, fingerprint, face and a table of where each method works, on one scrolling page; sheets for changing the PIN and setting up the face. | See the calls table on the board. |
-| System Settings | B. Overview with subpages | One card per method and a subpage behind each, with three first-run steps when no PIN is set. | The same calls as A. |
+| System Settings | A. One page | Status, PIN, fingerprint, face and a table of where each method works, on one scrolling page; sheets for changing the PIN and setting up the face. | Existing Agent calls, plus new ones for fingerprint and face enrolment, the PIN state and the reset (the calls table on the board). |
+| System Settings | B. Overview with subpages | One card per method and a subpage behind each, with three first-run steps when no PIN is set. | The same Agent calls as A, existing and new. |
 
 ## Recommendation
 
@@ -74,5 +85,7 @@ Assumed: that the shared `SessionManagementScreen` component draws the message t
 7. **KDE's fingerprint service under lock A on 6.8.** Can `kde-fingerprint` be kept off the sensor without rebuilding KDE, so that only the Agent claims it?
 8. **Biometrics during a PIN lockout.** Do the fingerprint and face still run while the PIN is locked? The ADRs read do not say.
 9. **The days in `pin-expires-soon`.** The number is only inside the English sentence; a translated settings page needs it as data.
-10. **Missing Agent calls for the settings page:** whether a PIN is set (and when it was changed), the face helper's enrol, test and delete calls ([ADR-0015](../adr/0015-face-capture-and-enrolment.md)), and the reset ([ADR-0003](../adr/0003-destructive-reset.md)).
+10. **Missing Agent calls for the settings page:** whether a PIN is set (and when it was changed); enrolling, listing and deleting fingers, which also needs a wider rule in polkit (the Linux service that decides which program may ask another for what) so that the Agent's user may enrol at fprintd; setting up, testing and deleting the face ([ADR-0015](../adr/0015-face-capture-and-enrolment.md)); and the reset ([ADR-0003](../adr/0003-destructive-reset.md)). The settings page cannot be finished without them, because it may not run a command instead.
 11. **The grace window (login C).** Waiting a few seconds for a finger or face before asking for the PIN is left open in the ADR-0023 amendment of 2026-11-21.
+12. **Opening System Settings from the expiry notification.** Does opening the settings page through KDE's own launcher count as running a command under the no-command rule?
+13. **UX7.** Section 8 says fingerprint setup reuses KDE's window on the Users page. The no-command rule replaces that with Agent calls; UX7 needs rewording when the ADR for the Plasma container is written.
