@@ -2,7 +2,7 @@
 type: note
 subject: UI proposals for Linux Hello on the KDE Plasma login screen, lock screen and System Settings
 artifact: note
-status: draft
+status: answered
 owner: "@atterdag"
 concepts: [plasma, sddm, kscreenlocker, kcm, prompt, status, pam]
 tags: [ux, plasma, proposal]
@@ -60,6 +60,20 @@ Each login and lock-screen proposal is tagged with what it needs: only the PAM t
 - **Login screen: B, reached through A.** Ship the own theme as A first, since the stock Breeze theme (KDE's default look) shows no PAM line at all; add B's live method row once the greeter's bus access and the prompt questions below are settled; offer C to SDDM later. The cost is a copy of Breeze to maintain.
 - **Lock screen: A on Plasma 6.6, B on 6.8, C proposed upstream.** This is ADR-0016 as decided, made concrete. The cost is two behaviours by Plasma version, and on 6.8 KDE does not show the info lines of its method rows.
 - **System Settings: A, with B's first-run steps.** Everything visible on one page, as on KDE's Users page. The cost is a long, dense page once everything is set up.
+
+## The maintainer's choice
+
+On 2026-11-21 the maintainer chose **login proposal B** (the live method row in Linux Hello's own SDDM theme), **lock proposal C** (the shared Auth Prompt in a slot that KDE adds to its lock screen) and **settings proposal A** (one page).
+
+What follows from the choice:
+
+- **The lock screen differs from ADR-0016.** [ADR-0016](../adr/0016-prompt-hosts.md) chose KDE's stock services on Plasma 6.8 and left a slot in KDE's lock screen as a later proposal to KDE. Choosing C makes that slot the goal, so ADR-0016 needs an amendment.
+- **The lock screen needs an answer until KDE ships the slot.** Proposal C cannot ship before KDE accepts and releases the change. Until then something must run on the lock screen; proposal A is the one that works today, on Plasma 6.6 and 6.8.
+- **Login B depends on open question 5**: whether SDDM's greeter can reach the system bus, and how it learns and may subscribe to a prompt that SDDM's helper opened.
+- **Settings A depends on open question 10**: the new Agent calls for fingerprint and face enrolment, the PIN state and the reset.
+- **Not done yet:** the ADR for the `plasma` container that records these choices, and the changes to `workspace.dsl` and section 8 that follow from it.
+
+The recommendation above is kept as written, for the record of what was weighed.
 
 ## What was checked, and what was assumed
 
