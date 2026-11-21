@@ -59,6 +59,7 @@ These ADRs decide how Linux Hello works. Each row says in one sentence what the 
 | [ADR-0012](../adr/0012-dbus-names.md) | Every D-Bus name of Linux Hello starts with `io.github.LinuxHello.`, and the Agent is `io.github.LinuxHello.Agent1`. | accepted |
 | [ADR-0021](../adr/0021-pin-transport.md) | The PIN travels from the PAM module to the Agent over a socket of its own, never as a D-Bus message, and only the Agent passes it to the TPM. Amends ADR-0014. | accepted |
 | [ADR-0024](../adr/0024-agent-status-interface.md) | The Agent answers a `GetStatus` call with the problems that affect the caller, in words, and shows file names to root only. At a sign-in prompt, `GetPromptStatus` gives the PAM module the problems of the person signing in, so that the login and lock screens can show them (amendment of 2026-11-21). | accepted |
+| [ADR-0026](../adr/0026-clients-reach-the-agent-directly.md) | Every client of the Agent (`linuxhello-ctl`, the PAM module, the login and lock screens, the System Settings page) opens its own bus connection and starts no program, so an answer cannot be faked by a program found through `PATH`. | accepted |
 
 **Signing in to the computer**
 
