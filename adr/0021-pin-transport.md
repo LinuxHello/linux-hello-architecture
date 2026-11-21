@@ -14,7 +14,7 @@ date: 2026-11-15
 
 ## Status
 
-Accepted, 2026-11-15, on the maintainer's decision the same day (proposed 2026-11-15). Amends [ADR-0014](0014-agent-bus.md) for the PIN only. Answers [issue 140](https://github.com/LinuxHello/linux-hello/issues/140). The maintainer chose the dedicated Agent socket (option A below) and accepted decisions 2 to 5 as written. Amendment accepted 2026-11-18, on the maintainer's decision the same day (proposed 2026-11-18): the control call is `ExpectPin(prompt_id)` (see *Amendment 2026-11-18*). Amendment accepted 2026-11-19, on the maintainer's standing approval of the lead's recommendations (proposed 2026-11-19): the parameters of the PIN stretching (see *Amendment 2026-11-19*). Amendment proposed 2026-11-21: when a PIN expires and what happens then (see *Amendment 2026-11-21*).
+Accepted, 2026-11-15, on the maintainer's decision the same day (proposed 2026-11-15). Amends [ADR-0014](0014-agent-bus.md) for the PIN only. Answers [issue 140](https://github.com/LinuxHello/linux-hello/issues/140). The maintainer chose the dedicated Agent socket (option A below) and accepted decisions 2 to 5 as written. Amendment accepted 2026-11-18, on the maintainer's decision the same day (proposed 2026-11-18): the control call is `ExpectPin(prompt_id)` (see *Amendment 2026-11-18*). Amendment accepted 2026-11-19, on the maintainer's standing approval of the lead's recommendations (proposed 2026-11-19): the parameters of the PIN stretching (see *Amendment 2026-11-19*). Amendment accepted 2026-11-21, on the maintainer's decision the same day (proposed 2026-11-21, option A): when a PIN expires and what happens then (see *Amendment 2026-11-21*).
 
 ## Context
 
@@ -99,7 +99,7 @@ In plain words: when a PIN is changed, the Agent keeps a fingerprint of the PIN 
 7. **Expiry** (`pin.expiry_days`) is not decided here: it needs the Agent to say at sign-in that a PIN has expired, which is a decision for the sign-in flow. (Decided in the amendment of 2026-11-21.)
 8. **Tests the code will name:** `a_replaced_pin_cannot_be_used_again_within_the_history`, `the_history_is_only_asked_after_the_current_pin_is_right`, `the_history_never_holds_a_key_authorisation`, `an_old_record_without_a_history_is_read`, `a_record_with_a_malformed_history_is_untrusted`, `a_change_that_fails_leaves_the_history_alone`.
 
-### Amendment 2026-11-21 (proposed): when a PIN expires, and what happens then
+### Amendment 2026-11-21 (accepted): when a PIN expires, and what happens then
 
 The policy has a key `pin.expiry_days`: after how many days a person must change their PIN (1 to 730; without it a PIN never expires). The policy files already accept the key, but nothing acts on it. Acting on it needs two things that cannot be taken back once shipped: a date stored in the user's record, which later versions must read, and the codes that tell the person, which clients will match on ([ADR-0024](0024-agent-status-interface.md), point 3). So this amendment fixes both.
 
