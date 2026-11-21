@@ -39,5 +39,6 @@ An architecture decision record (ADR) is a short note that records one decision 
 - [ADR-0023: A thin PAM module, and what login does when Linux Hello fails](0023-pam-module-and-login-failure.md) (amends the model): the PAM module only asks the Agent, and a failure falls through to the account password; the call that starts an authentication is `Authenticate(prompt_id, context)`.
 - [ADR-0024: The Agent's status interface](0024-agent-status-interface.md): the Agent says in words what is wrong for the caller, and shows file names to root only.
 - [ADR-0025: One virtual security key per user and active session](0025-virtual-key-per-user-session.md) (proposed; amends ADR-0017): the virtual security key belongs to one user and exists only while that user's session is in front and unlocked.
+- [ADR-0026: Clients reach the Agent directly, never through a command](0026-clients-reach-the-agent-directly.md) (accepted): every Linux Hello client, from `linuxhello-ctl` to the lock screen and the System Settings page, talks to the Agent over its own bus connection and the PIN socket, and starts no program and no shell.
 
 New ADRs start from [the template](../templates/adr.md).
