@@ -49,8 +49,9 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
 
             plasma = container "Plasma Integration" "Prompts, greeter and lock-screen integration, enrolment and settings" "Rust/cxx-qt, QML, KCM" {
                 authPrompt = component "Auth Prompt QML Component" "Shared method indicator and switcher; renders Agent auth state (UX1-UX5). One QML module in the system QML directory, imported by every host below (spike 0009)" "QML"
+                lockPrompt = component "Lock Screen Prompt" "Linux Hello's shared prompt in a slot of KDE's lock screen, showing the live state of every method. Needs KDE to add the slot; until then the lock screen shows only the PAM module's text. Talks only to the Agent through the shared prompt; runs no command (ADR-0016, amendment of 2026-11-21). Not built" "QML"
                 promptUi = component "Prompt UI" "In-session presence, verification and credential/provider-choice dialogs, outside the calling app. Shows the relying-party id from the request and labels from the Credential Index, never client text; confined process (own AppArmor profile, not dumpable) started by the Agent; a click is never a verification (spike 0120, ADR-0020)" "QML"
-                sddmTheme = component "SDDM Theme" "Own theme package (a Breeze fork) that embeds the shared prompt in SDDM (ADR-0016). The Plasma Login Manager needs an upstream change and is not part of 1.0" "QML"
+                greeter = component "Linux Hello Greeter" "Linux Hello's own login screen: a greeter for greetd that shows every PAM question and line with its kind, lists the installed desktops from the session files and starts the chosen one. Talks only to greetd's socket and, through the shared prompt, to the Agent; runs no command. Decided in ADR-0016 (amendment of 2026-11-21) if spike 0311 confirms it, otherwise an own SDDM theme. Not built" "QML"
                 kcm = component "Linux Hello Settings Module" "Own settings page next to Users in System Settings (kcm_users has no extension point, spike 0010): methods, policy (UX7a)" "KCM, QML"
                 faceEnrol = component "Face Enrolment Module" "Capture, recognition test and delete through Howdy; status text and the test result, no live preview in 1.0 (ADR-0015; UX6a deferred)" "QML, Rust"
                 pinSettings = component "PIN Settings" "Change PIN, rules, lockout status, forgot-PIN link (UX7b)" "QML"
@@ -81,7 +82,7 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
         tpm = softwareSystem "TPM 2.0" "Kernel resource manager /dev/tpmrm0" "External"
         camera = softwareSystem "Camera" "UVC camera with RGB and IR as separate V4L2 nodes; Howdy holds the IR stream while it captures; the BRIO streams RGB and IR together only in some start orders (spike 0012)" "External"
         secretService = softwareSystem "Secret Service (KWallet)" "Token and secret storage" "External"
-        loginManager = softwareSystem "Plasma login manager" "Graphical login: SDDM, or the Plasma Login Manager from Plasma 6.8" "External"
+        greetd = softwareSystem "greetd" "Small login service: runs PAM for the person signing in and starts the chosen desktop; the screen is a separate greeter program it talks to over a socket. SDDM and the Plasma Login Manager still work with pam_linuxhello, through PAM text only (ADR-0016, amendment of 2026-11-21)" "External"
         lockScreen = softwareSystem "kscreenlocker" "Plasma lock screen; a part of the Plasma shell package from 6.8" "External"
         systemSettings = softwareSystem "KDE System Settings" "Hosts KCMs; Users page with a fixed fingerprint entry" "External"
         browsers = softwareSystem "Browsers" "Firefox, Chromium" "External"
@@ -96,7 +97,7 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
         mgmt = softwareSystem "Device management" "Future: delivers admin policy, as Intune does" "External"
 
         # People
-        user -> loginManager "Signs in"
+        user -> greeter "Signs in, chooses a desktop"
         user -> lockScreen "Unlocks"
         user -> browsers "Signs in to websites"
         user -> nativeApps "Uses"
@@ -111,12 +112,15 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
         nativeApps -> secretService "Stores tokens" "Secret Service API"
         browsers -> relyingParties "WebAuthn ceremonies" "HTTPS"
         uhid -> ctapHelper "Delivers CTAP2 reports" "/dev/uhid"
-        loginManager -> linuxPam "Authenticates via"
-        lockScreen -> linuxPam "Authenticates via the stock kde, kde-face and kde-fingerprint services; text only on 6.8, inside the kde service on 6.6 (ADR-0016)"
+        greetd -> linuxPam "Authenticates via" "PAM"
+        lockScreen -> linuxPam "Authenticates via the kde service, where pam_linuxhello runs every method; shows the module's text until KDE ships the slot, on Plasma 6.6 and 6.8 (ADR-0016, amendment of 2026-11-21, point 7)" "PAM"
 
         # KDE integration
-        loginManager -> sddmTheme "Loads theme" "QML"
-        sddmTheme -> authPrompt "Embeds"
+        greetd -> greeter "Starts the greeter; passes each PAM question and line with its kind" "greetd IPC, unix socket"
+        greeter -> greetd "Answers PAM questions, starts the chosen desktop" "greetd IPC, unix socket"
+        greeter -> authPrompt "Embeds"
+        lockScreen -> lockPrompt "Shows in a slot of its lock screen; needs a change in KDE" "QML"
+        lockPrompt -> authPrompt "Embeds"
         promptUi -> authPrompt "Embeds"
         authPrompt -> dbusApi "Subscribes to auth state, selects method, over the system bus (ADR-0014)" "D-Bus"
         systemSettings -> kcm "Hosts" "KCM"

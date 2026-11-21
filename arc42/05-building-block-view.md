@@ -230,16 +230,17 @@ Notice that the bridge offers the same Provider Interface as the TPM provider, s
 
 ### Plasma
 
-The diagram shows the pieces of the Plasma Integration and the KDE programs that host them: the login screen, System Settings and the user.
+The diagram shows the pieces of the Plasma Integration and the programs that host them: greetd, the small login service that runs Linux Hello's login screen; kscreenlocker, Plasma's lock screen; System Settings; and the user.
 
-![C4 component view of Plasma Integration: the shared Auth Prompt QML Component embedded by the SDDM Theme and the Prompt UI; the Linux Hello Settings Module with PIN Settings and Face Enrolment; the Enrolment Wizard; and the optional Users Page Entries](../diagrams/Plasma.svg)
+![C4 component view of Plasma Integration: the shared Auth Prompt QML Component embedded by the Linux Hello Greeter, the Lock Screen Prompt and the Prompt UI; greetd, which starts the greeter; the lock screen, which shows the Lock Screen Prompt in a slot; the Linux Hello Settings Module with PIN Settings and Face Enrolment; the Enrolment Wizard; and the optional Users Page Entries](../diagrams/Plasma.svg)
 
-Notice that one shared component, the Auth Prompt, is embedded wherever a prompt appears, so the login screen and the passkey window look and behave alike.
+Notice that one shared component, the Auth Prompt, is embedded wherever a prompt appears, so the login screen, the lock screen and the passkey window look and behave alike. The greeter talks to greetd and, through the Auth Prompt, to the Agent; it starts no other program.
 
 | Component | What it does | State |
 | :-- | :-- | :-- |
 | Auth Prompt QML Component | The method symbols and the switch between them, filled from the Agent's signals. One QML module that every host imports ([spike 0009](../spikes/0009-plasma-prompt-component.md)). | Not built |
-| SDDM Theme | Linux Hello's own login screen theme, based on KDE's Breeze theme, that embeds the Auth Prompt ([ADR-0016](../adr/0016-prompt-hosts.md)). The newer Plasma Login Manager would need a change in KDE and is not part of version 1.0. | Not built |
+| Linux Hello Greeter | Linux Hello's own login screen, a *greeter* (the screen program) for greetd, a small login service that runs PAM and starts the chosen desktop. greetd passes each PAM question and line to the greeter with its kind, which SDDM, the login screen Plasma ships, cannot do. The greeter embeds the Auth Prompt and starts any installed desktop, not only Plasma. In SDDM and the Plasma Login Manager, `pam_linuxhello` still works through PAM text only ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21). | Decided, not built; holds if [spike 0311](../spikes/0311-greetd-greeter.md) confirms it, otherwise an own SDDM theme |
+| Lock Screen Prompt | The Auth Prompt inside KDE's lock screen, in a slot that Linux Hello asks KDE to add, so the lock screen shows the live state of every method like the login screen. Linux Hello writes no lock screen of its own: on Wayland only the locker the compositor trusts can lock safely. Until KDE ships the slot, `pam_linuxhello` runs every method inside KDE's `kde` password service and the lock screen shows the module's text, on Plasma 6.6 and 6.8 ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21, point 7). | Decided, not built; needs a change in KDE |
 | Prompt UI | The window that asks the user to confirm a passkey. It shows only the website's name as the request gives it and the labels Linux Hello stored, never text the app sent. The Agent starts it as a confined process that other programs cannot inspect, and a click on it never counts as proof of who the user is ([ADR-0020](../adr/0020-presence-and-verification.md)). | Not built |
 | Linux Hello Settings Module | Linux Hello's own page in System Settings, next to the Users page, because the Users page has no place for other programs' entries ([spike 0010](../spikes/0010-kcm-users-extension-point.md)). | Not built |
 | PIN Settings | Change the PIN, see the PIN rules and whether the PIN is locked, and the "forgot PIN" link. | Not built |

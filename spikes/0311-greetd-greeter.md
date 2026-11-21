@@ -42,8 +42,8 @@ Not run yet. All steps are untested.
 
 ## What a yes or no changes
 
-- **Yes:** point 1 of the [ADR-0016](../adr/0016-prompt-hosts.md) amendment of 2026-11-21 holds: Linux Hello's login screen is a greetd greeter, in place of decision 3 (the own SDDM theme). The `SDDM Theme` component in `workspace.dsl` is replaced.
-- **No or partly:** decision 3 of ADR-0016 stands, with login proposal B, the live method row in an own SDDM theme, and the spike's findings say what greetd would need.
+- **Yes:** point 1 of the [ADR-0016](../adr/0016-prompt-hosts.md) amendment of 2026-11-21 holds: Linux Hello's login screen is a greetd greeter, in place of decision 3 (the own SDDM theme). `workspace.dsl` already models the `Linux Hello Greeter` under greetd, and the login sequence in section 6 is rewritten.
+- **No or partly:** decision 3 of ADR-0016 stands, `workspace.dsl` goes back to an `SDDM Theme` component, with login proposal B, the live method row in an own SDDM theme, and the spike's findings say what greetd would need.
 
 ## Evidence
 
