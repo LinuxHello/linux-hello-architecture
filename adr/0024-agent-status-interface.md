@@ -6,7 +6,7 @@ status: accepted
 owner: "@atterdag"
 concepts: [dbus, status, conditions, doctor, lock-screen, one-way-door]
 tags: [adr, one-way-door, dbus, ux]
-sources: ["0014-agent-bus.md", "0023-pam-module-and-login-failure.md", "https://github.com/LinuxHello/linux-hello/issues/214", "https://github.com/LinuxHello/linux-hello/issues/155", "https://github.com/LinuxHello/linux-hello/issues/156", "https://github.com/LinuxHello/linux-hello/issues/192", "https://github.com/LinuxHello/linux-hello/issues/213"]
+sources: ["0014-agent-bus.md", "0023-pam-module-and-login-failure.md", "https://github.com/LinuxHello/linux-hello/issues/214", "https://github.com/LinuxHello/linux-hello/issues/155", "https://github.com/LinuxHello/linux-hello/issues/156", "https://github.com/LinuxHello/linux-hello/issues/192", "https://github.com/LinuxHello/linux-hello/issues/213", "https://github.com/LinuxHello/linux-hello/issues/326"]
 date: 2026-11-17
 ---
 
@@ -14,7 +14,7 @@ date: 2026-11-17
 
 ## Status
 
-Accepted, 2026-11-17, on the maintainer's decision the same day (proposed 2026-11-17). Answers [linux-hello#214](https://github.com/LinuxHello/linux-hello/issues/214), the interface behind [#155](https://github.com/LinuxHello/linux-hello/issues/155) (the offline `linuxhello-ctl status` and `doctor`, built) and [#213](https://github.com/LinuxHello/linux-hello/issues/213) (status on the login and lock screens). A new D-Bus method is a one-way door (AGENTS.md invariant 7), so it needed the maintainer's decision, which is given. Amendment accepted 2026-11-21, on the maintainer's standing approval of the lead's recommendations (proposed 2026-11-21): the conditions at a sign-in prompt, `GetPromptStatus` (see *Amendment 2026-11-21*).
+Accepted, 2026-11-17, on the maintainer's decision the same day (proposed 2026-11-17). Answers [linux-hello#214](https://github.com/LinuxHello/linux-hello/issues/214), the interface behind [#155](https://github.com/LinuxHello/linux-hello/issues/155) (the offline `linuxhello-ctl status` and `doctor`, built) and [#213](https://github.com/LinuxHello/linux-hello/issues/213) (status on the login and lock screens). A new D-Bus method is a one-way door (AGENTS.md invariant 7), so it needed the maintainer's decision, which is given. Amendment accepted 2026-11-21, on the maintainer's standing approval of the lead's recommendations (proposed 2026-11-21): the conditions at a sign-in prompt, `GetPromptStatus` (see *Amendment 2026-11-21*). Amendment accepted 2026-11-22 on the same standing approval: the days of `pin-expires-soon` travel as the code's parameter (see *Amendment 2026-11-22*).
 
 ## Context
 
@@ -81,6 +81,27 @@ In plain words: when someone signs in, the program that asks for the PIN is the 
 7. **What the screens show is not checked here.** That SDDM, the login screen of Plasma, and the Plasma lock screen display PAM text messages is what their documentation and source say. It is an assumption until the maintainer's test of the prototype on a real desktop confirms it; the test VM checks the messages at the PAM conversation, through pamtester.
 8. **Tests the code will name:** `prompt_status_answers_for_the_prompts_user`, `prompt_status_is_only_for_the_prompts_opener`, `prompt_status_before_sign_in_says_only_why_it_may_fail`, `prompt_status_tells_the_expiry_only_after_success`, `prompt_status_names_only_this_context`, and in the PAM module `the_conditions_are_shown_as_pam_messages`, `a_failed_status_call_changes_nothing`.
 
+### Amendment 2026-11-22 (accepted): the days of `pin-expires-soon` travel in the code
+
+A screen shows a condition in its own words, picked by the condition's code, and leaves the English sentence aside (point 5): the settings page of System Settings says "Your PIN expires in 5 days" in the person's language, with a button that opens the PIN section, and not the Agent's sentence that tells them to run `linuxhello-ctl pin change`. For `pin-expires-soon` that is not possible today, because the number of days is only inside the sentence, and a client that wants it must take the sentence apart. A sentence is free text: the day it is reworded, every client that parses it breaks ([#326](https://github.com/LinuxHello/linux-hello/issues/326)).
+
+Point 3 already gives a code one optional parameter, written after the code as `: ` and the value, as in `context-unsatisfiable: login`. This amendment uses that form for the days.
+
+| Option | Pros | Cons |
+| :-- | :-- | :-- |
+| **A. The days as the code's parameter: `pin-expires-soon: 5`** | The reply keeps its shape `a(sss)`; the form exists already; a client that knows only the base code still finds it | The parameter of one code is a number, of another a context name; each client must know which |
+| B. A fourth field with named values, `a(sssa{sv})` | Room for any number of values per condition | A new method or a changed reply shape, for one number |
+| C. A separate call for the PIN's age | Exact data | A second call for something `GetStatus` already reports; the settings page needs one anyway for whether a PIN is set ([#313](https://github.com/LinuxHello/linux-hello/issues/313)), which is a separate question |
+
+**Option A.**
+
+1. **The code.** `pin-expires-soon` is reported as `pin-expires-soon: <days>`, where `<days>` is the whole number of days left, rounded up, at least `1`, written in decimal digits with no sign and no leading zero. It is the same number that the sentence says. The sentence stays as it is, for clients that show it.
+2. **The base code.** The part before `: ` is the code of the closed set, as for `context-unsatisfiable`. A client compares the base code to decide what a condition is, and reads the parameter only for the codes whose parameter it knows. A code without `: ` has no parameter.
+3. **Which codes have which parameter.** `context-unsatisfiable` has a context name (one of `login`, `unlock`, `sudo`, `session`, or `other`); `pin-expires-soon` has a number of days. No other code has a parameter. Giving one to another code (for example the minutes of `pin-locked`) is an additive change by a later amendment; until then a client takes its number from nowhere but the parameter, never from the sentence.
+4. **Where it applies.** `GetStatus`, `GetStatusDetails`, `GetPromptStatus` and `linuxhello-ctl status` report the same code. The PAM module shows each condition once by its full code, so this changes nothing there.
+5. **Compatibility.** The code had no parameter in the version that the prototype shipped. No released client matched on it, so this is the last moment at which the change is free; from the first release on, the form above is fixed.
+6. **Tests the code names:** `pin_expires_soon_carries_the_days_as_its_parameter` (the Agent), `a_client_reads_the_days_without_parsing_the_sentence` (a client splits the code and gets the number), and `status_codes_are_a_closed_set` compares base codes.
+
 ## Consequences
 
 **Easier:** the login and lock screens, the Settings page and `linuxhello-ctl` show one set of conditions with one vocabulary; a user sees what concerns them and nothing about anyone else; the interface stays additive.
@@ -92,4 +113,4 @@ In plain words: when someone signs in, the program that asks for the PIN is the 
 - Without a signal, a screen that stays open shows stale status until it asks again.
 - `GetStatusDetails` is a second method to confine; it needs the same bus-policy and profile coverage as the first (both are on the interface the profile already names).
 
-Not decided here: the exact list of codes beyond the three above and the lockout seconds in `tpm-locked`. How the greeter and the lock screen get the conditions is decided in the amendment of 2026-11-21 (`GetPromptStatus`); a richer layout inside Plasma is not.
+Not decided here: the exact list of codes beyond the three above and the lockout seconds in `tpm-locked`. Which codes carry a parameter, and which kind, is decided in the amendment of 2026-11-22. How the greeter and the lock screen get the conditions is decided in the amendment of 2026-11-21 (`GetPromptStatus`); a richer layout inside Plasma is not.
