@@ -192,6 +192,10 @@ The Linux service that reads fingerprint sensors and matches a finger against th
 
 Testing a parser by feeding it a stream of random and deliberately malformed input, to find inputs that crash it or make it misbehave. Linux Hello fuzzes every parser that reads messages from programs it does not trust, such as the Agent's D-Bus arguments and, later, the CTAP messages from browsers.
 
+### greetd
+
+A small login service: it runs PAM for the person signing in and starts the desktop they chose, and leaves the screen to a separate program, the greeter, which it talks to over a socket. Unlike SDDM it passes each PAM question and line to the greeter with its kind, so the screen can show exactly what the module says. Linux Hello's login screen is to be a greeter for greetd ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21; [spike 0311](../spikes/0311-greetd-greeter.md)).
+
 ### hidraw
 
 The Linux interface through which a program reads and writes a *HID* device directly. Browsers find security keys through `/dev/hidraw*` devices. The device Linux Hello creates through *uhid* appears there.
@@ -218,7 +222,7 @@ A free password manager that keeps passwords and, since version 2.7.7, passkeys 
 
 ### kscreenlocker
 
-KDE Plasma's lock screen. Linux Hello does not change it: on Plasma 6.8 and later it shows the text of KDE's own face and fingerprint login services ([ADR-0016](../adr/0016-prompt-hosts.md)).
+KDE Plasma's lock screen. Linux Hello writes no lock screen of its own, because on Wayland only the locker the compositor trusts can lock safely. Instead it asks KDE for a slot in this lock screen where Linux Hello's prompt can sit; until KDE ships one, the lock screen shows the PAM module's text ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21).
 
 ### KWallet
 
@@ -226,7 +230,7 @@ KDE's store for passwords and tokens, an implementation of the *Secret Service*.
 
 ### Login manager, greeter
 
-The program that shows the login screen after boot and starts the user's session. The part the user sees is called the greeter. Plasma uses SDDM, and Plasma 6.8 brought the Plasma Login Manager, a fork of SDDM. Linux Hello adds an SDDM theme that shows which sign-in method is running; the Plasma Login Manager has no place for a theme like that, so it is not supported in 1.0 ([ADR-0016](../adr/0016-prompt-hosts.md)).
+The program that shows the login screen after boot and starts the user's session. The part the user sees is called the greeter. Plasma uses SDDM, and Plasma 6.8 brought the Plasma Login Manager, a fork of SDDM. Linux Hello's own login screen is a greeter for greetd, because SDDM answers the PAM module's questions itself and never shows them; it is decided but not built, and depends on [spike 0311](../spikes/0311-greetd-greeter.md) ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21). In SDDM, `pam_linuxhello` still works through PAM text only.
 
 ### logind
 
