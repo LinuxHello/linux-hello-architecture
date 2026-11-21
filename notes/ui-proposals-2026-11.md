@@ -73,10 +73,10 @@ A lock screen of Linux Hello's own was considered and rejected. On Wayland only 
 What follows from the choice:
 
 - **ADR-0016 needs an amendment.** Login D replaces its decision 3 (an own SDDM theme), and lock C differs from its decision 2 (KDE's stock services on Plasma 6.8, with the slot only as a later proposal to KDE).
-- **Login D first needs a spike**: the [spike brief](spike-brief-greetd-greeter.md) asks whether a QML greeter under greetd signs a person in with `pam_linuxhello` to Plasma and another desktop and shows every question and message with its kind.
+- **Login D first needs a spike**: the [spike brief](../spikes/0311-greetd-greeter.md), tracked in [linux-hello#311](https://github.com/LinuxHello/linux-hello/issues/311), asks whether a QML greeter under greetd signs a person in with `pam_linuxhello` to Plasma and another desktop and shows every question and message with its kind.
 - **The lock screen needs an answer until KDE ships the slot.** Proposal C cannot ship before KDE accepts and releases the change. Until then something must run on the lock screen; proposal A is the one that works today, on Plasma 6.6 and 6.8.
 - **Settings A depends on open question 10**: the new Agent calls for fingerprint and face enrolment, the PIN state and the reset.
-- **Not done yet:** the ADR for the `plasma` container that records these choices, the GitHub issue for the spike, and the changes to `workspace.dsl` and section 8 that follow.
+- **Not done yet:** the ADR for the `plasma` container that records these choices, and the changes to `workspace.dsl` and section 8 that follow.
 
 The recommendation above is kept as written, for the record of what was weighed.
 

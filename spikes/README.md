@@ -33,6 +33,7 @@ date: 2026-11-07
 | [0177 follow-up: Starting the presence prompt from the Agent as a system unit](0177-prompt-launch-by-the-system-manager.md) | Yes in the VM: the Agent (not root) starts `linuxhello-prompt@<uid>` through a narrow polkit rule; its system cgroup could not be entered by same-user code; a real window and the real Agent are not tested | [#177](https://github.com/LinuxHello/linux-hello/issues/177) |
 | [0120: Resident keys, user presence and user verification in the virtual CTAP authenticator](0120-resident-keys-presence-and-uv.md) | Yes for resident keys, UV and one signature per request in Chromium, Chrome and Firefox (also as Snaps); Partly for presence: a click is forgeable by a process of the same user, a sensor gesture is not; Partly for the provider choice | [#120](https://github.com/LinuxHello/linux-hello/issues/120) |
 | [0033: Own browser extension in front of the broker: trusted origin, and native messaging from confined browsers](0033-own-extension-origin-and-confined-native-messaging.md) | Open (source read: Partly; origin solvable by design, confined Firefox needs the native-messaging proxy, untested on Plasma) | [#33](https://github.com/LinuxHello/linux-hello/issues/33) |
+| [0311: Linux Hello's login screen as a QML greeter for greetd](0311-greetd-greeter.md) | Open: not run yet | [#311](https://github.com/LinuxHello/linux-hello/issues/311) |
 
 New spikes start from [the template](../templates/spike.md). See [index](../README.md).
 

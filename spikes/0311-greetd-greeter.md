@@ -6,18 +6,18 @@ status: open
 owner: "@atterdag"
 concepts: [greetd, greeter, login-screen, pam, pam-linuxhello, plasma, wayland]
 tags: [spike, plasma, ux]
-sources: ["ui-proposals-2026-11.md", "../adr/0016-prompt-hosts.md", "../adr/0023-pam-module-and-login-failure.md", "../adr/0024-agent-status-interface.md", "https://man.archlinux.org/man/greetd-ipc.7.en"]
+sources: ["../notes/ui-proposals-2026-11.md", "https://github.com/LinuxHello/linux-hello/issues/311", "../adr/0016-prompt-hosts.md", "../adr/0023-pam-module-and-login-failure.md", "../adr/0024-agent-status-interface.md", "https://man.archlinux.org/man/greetd-ipc.7.en"]
 date: 2026-11-21
-issue: 
+issue: https://github.com/LinuxHello/linux-hello/issues/311
 ---
 
-# Spike brief: a Linux Hello greeter for greetd
+# Spike 0311: a Linux Hello greeter for greetd
 
-This is a brief for a spike that has not run yet. It moves to `spikes/` with the issue number in its name once an issue exists.
+This spike has not run yet; it is tracked in [linux-hello#311](https://github.com/LinuxHello/linux-hello/issues/311).
 
 ## Question
 
-Linux Hello wants a login screen that shows exactly what its PAM module says: the module's own question, its messages, and whether a message is an error or only information. PAM (Pluggable Authentication Modules) is the Linux system through which a login screen asks a module to check a person; `pam_linuxhello` is Linux Hello's module, which hands the checking to the Agent, Linux Hello's system service. SDDM, the login screen Plasma uses today, cannot do this: it answers the module's question itself with the typed text and treats every error line as a failed login ([the UI proposals](ui-proposals-2026-11.md) explain what was found in its source). The maintainer therefore chose, on 2026-11-21, to build Linux Hello's own login screen (login proposal D).
+Linux Hello wants a login screen that shows exactly what its PAM module says: the module's own question, its messages, and whether a message is an error or only information. PAM (Pluggable Authentication Modules) is the Linux system through which a login screen asks a module to check a person; `pam_linuxhello` is Linux Hello's module, which hands the checking to the Agent, Linux Hello's system service. SDDM, the login screen Plasma uses today, cannot do this: it answers the module's question itself with the typed text and treats every error line as a failed login ([the UI proposals](../notes/ui-proposals-2026-11.md) explain what was found in its source). The maintainer therefore chose, on 2026-11-21, to build Linux Hello's own login screen (login proposal D).
 
 The plan is not to write a whole login manager but only the screen. greetd is a small login service that runs PAM and starts the chosen desktop; the screen it shows is a separate program, the *greeter*, which talks to greetd over a socket. greetd passes each PAM question to the greeter with its text and its kind (a visible or secret question, an info line or an error line) and waits for the answer, according to its manual page `greetd-ipc(7)`.
 
