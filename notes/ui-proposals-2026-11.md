@@ -34,7 +34,7 @@ All proposals are on one design canvas: [Linux Hello on Plasma — UI proposals]
 | Page | What you find there |
 | :-- | :-- |
 | [Read me and recommendation](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-overview) | How to read a proposal, the terms used, what was checked in KDE's and SDDM's source code, and the recommendation per place. |
-| [Login screen (SDDM)](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-login) | Three proposals for SDDM, the login screen Plasma uses. |
+| [Login screen (SDDM)](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-login) | Four proposals: three for SDDM, the login screen Plasma uses, and one for Linux Hello's own login screen under greetd (proposal D, chosen). |
 | [Lock screen](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-lock) | Three proposals for kscreenlocker, Plasma's lock screen. |
 | [System Settings page](https://claude.ai/artifact/C4tvVvhmrPhuc13DeBW9ij#page-settings) | Two proposals for Linux Hello's own page in System Settings (a KCM, a KDE Configuration Module), each with a table of the Agent calls it needs. |
 
@@ -49,6 +49,7 @@ Each login and lock-screen proposal is tagged with what it needs: only the PAM t
 | Login screen | A. Message line | Linux Hello's own SDDM theme labels the field "PIN", prints a fixed hint and shows every PAM line of the attempt. | PAM text only, plus the own theme already decided in [ADR-0016](../adr/0016-prompt-hosts.md). |
 | Login screen | B. Live method row | The same theme plus the shared Auth Prompt, one QML part that every Linux Hello screen imports; it follows the Agent's signals about the sign-in attempt and shows each method's state. | QML that calls the Agent from the greeter, the program that draws the login screen. |
 | Login screen | C. Methods start at once | SDDM holds a real PAM conversation and starts the attempt when an account is picked; the module waits briefly for a finger or face. | A change in SDDM (and in the Plasma Login Manager). |
+| Login screen | D. Linux Hello greeter for greetd (chosen) | Linux Hello's own login screen as a greeter for greetd, which shows each PAM question with its kind and can start any installed desktop. | QML that talks to greetd's socket and to the Agent; a spike first. |
 | Lock screen | A. Inside the password service | `pam_linuxhello`, Linux Hello's PAM module, runs all methods inside KDE's `kde` PAM service; the lock screen prints its lines. | PAM text only. |
 | Lock screen | B. KDE's own method rows | On Plasma 6.8, `pam_linuxhello` runs in `kde`, `kde-fingerprint` and `kde-face`, each limited to one method; KDE draws the rows. | PAM text only, plus a new module argument. |
 | Lock screen | C. Shared prompt in the lock screen | KDE adds a slot for a method-state part; Linux Hello's Auth Prompt sits there. | A change in KDE. |
@@ -63,15 +64,19 @@ Each login and lock-screen proposal is tagged with what it needs: only the PAM t
 
 ## The maintainer's choice
 
-On 2026-11-21 the maintainer chose **login proposal B** (the live method row in Linux Hello's own SDDM theme), **lock proposal C** (the shared Auth Prompt in a slot that KDE adds to its lock screen) and **settings proposal A** (one page).
+On 2026-11-21 the maintainer chose **login proposal D** (Linux Hello's own login screen, as a greeter for greetd), **lock proposal C** (the shared Auth Prompt in a slot that KDE adds to its lock screen) and **settings proposal A** (one page). The login choice was proposal B at first and changed to D the same day; B, the live method row in an own SDDM theme, stays the fallback.
+
+Login proposal D was added to the canvas after the first round. greetd is a small login service that runs PAM and starts the chosen desktop; Linux Hello writes only the *greeter*, the screen program that greetd talks to. greetd passes each PAM question to the greeter with its text and its kind (a visible or secret question, an info line or an error line) and waits for the answer, according to its manual page [greetd-ipc(7)](https://man.archlinux.org/man/greetd-ipc.7.en). This solves what SDDM cannot do. The greeter reads the installed desktops from `/usr/share/wayland-sessions` and `/usr/share/xsessions`, as GDM and SDDM do, so it starts Plasma, GNOME or any other desktop.
+
+A lock screen of Linux Hello's own was considered and rejected. On Wayland only the locker that the compositor trusts can lock the screen safely; KDE's compositor, KWin, starts KDE's own lock screen, and the wayland.app table lists KWin 6.7 as not supporting `ext-session-lock-v1`, the standard protocol that lets another program lock the screen. That table is a secondary source; KWin's own code was not checked.
 
 What follows from the choice:
 
-- **The lock screen differs from ADR-0016.** [ADR-0016](../adr/0016-prompt-hosts.md) chose KDE's stock services on Plasma 6.8 and left a slot in KDE's lock screen as a later proposal to KDE. Choosing C makes that slot the goal, so ADR-0016 needs an amendment.
+- **ADR-0016 needs an amendment.** Login D replaces its decision 3 (an own SDDM theme), and lock C differs from its decision 2 (KDE's stock services on Plasma 6.8, with the slot only as a later proposal to KDE).
+- **Login D first needs a spike**: the [spike brief](spike-brief-greetd-greeter.md) asks whether a QML greeter under greetd signs a person in with `pam_linuxhello` to Plasma and another desktop and shows every question and message with its kind.
 - **The lock screen needs an answer until KDE ships the slot.** Proposal C cannot ship before KDE accepts and releases the change. Until then something must run on the lock screen; proposal A is the one that works today, on Plasma 6.6 and 6.8.
-- **Login B depends on open question 5**: whether SDDM's greeter can reach the system bus, and how it learns and may subscribe to a prompt that SDDM's helper opened.
 - **Settings A depends on open question 10**: the new Agent calls for fingerprint and face enrolment, the PIN state and the reset.
-- **Not done yet:** the ADR for the `plasma` container that records these choices, and the changes to `workspace.dsl` and section 8 that follow from it.
+- **Not done yet:** the ADR for the `plasma` container that records these choices, the GitHub issue for the spike, and the changes to `workspace.dsl` and section 8 that follow.
 
 The recommendation above is kept as written, for the record of what was weighed.
 
