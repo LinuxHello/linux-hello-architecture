@@ -338,6 +338,10 @@ The situation in which the user is asked to authenticate: `login` (the login scr
 
 The Agent's list of the user's *discoverable credentials*: for each passkey, its credential id, the account, which provider holds it and the key in the encrypted form the TPM handed back (a wrapped key blob), which only that TPM can use. The prompt takes the names it shows from here, never from the website. Decided, not built.
 
+### cxx-qt
+
+A library that lets Rust code define objects that QML, the language of KDE's screens, can use, through generated glue between Rust and C++. `workspace.dsl` names it for the Plasma screens' link to the Agent; whether to use it is proposed in [ADR-0028](../adr/0028-plasma-agent-backend.md).
+
 ### Destructive reset
 
 What happens when the user forgets the PIN. With the account or administrator password, the user deletes the *root key* and sets a new PIN; every device-bound passkey under the old root key is lost and must be registered again with each website. There is no recovery key ([ADR-0003](../adr/0003-destructive-reset.md)). Windows Hello's default reset works the same way.
