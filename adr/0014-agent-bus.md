@@ -14,7 +14,7 @@ date: 2026-11-08
 
 ## Status
 
-Accepted, 2026-11-08, on the maintainer's decision the same day (proposed 2026-11-08). Amendment accepted 2026-11-16, on the maintainer's decision the same day: what identifies a caller (see *Amendment 2026-11-16*); it changes the *Policy* point and is the answer to [linux-hello#162](https://github.com/LinuxHello/linux-hello/issues/162). Amendment accepted 2026-11-17, on the maintainer's decision the same day (proposed 2026-11-17): the errors, the result and the contract of the interface (see *Amendment 2026-11-17*), the answer to [linux-hello#156](https://github.com/LinuxHello/linux-hello/issues/156). Amendment accepted 2026-11-22 on the maintainer's standing approval of the lead's recommendations: screens learn of a prompt by a signal, and only its opener may change it (see *Amendment 2026-11-22*), the answer to [linux-hello#317](https://github.com/LinuxHello/linux-hello/issues/317).
+Accepted, 2026-11-08, on the maintainer's decision the same day (proposed 2026-11-08). Amendment accepted 2026-11-16, on the maintainer's decision the same day: what identifies a caller (see *Amendment 2026-11-16*); it changes the *Policy* point and is the answer to [linux-hello#162](https://github.com/LinuxHello/linux-hello/issues/162). Amendment accepted 2026-11-17, on the maintainer's decision the same day (proposed 2026-11-17): the errors, the result and the contract of the interface (see *Amendment 2026-11-17*), the answer to [linux-hello#156](https://github.com/LinuxHello/linux-hello/issues/156). Amendment accepted 2026-11-22 on the maintainer's standing approval of the lead's recommendations: screens learn of a prompt by a signal, and only its opener may change it (see *Amendment 2026-11-22*), the answer to [linux-hello#317](https://github.com/LinuxHello/linux-hello/issues/317). A second amendment the same day, on the same approval: the Agent says how each method ended (see *Amendment 2026-11-22, second*), for [linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338).
 
 ## Context
 
@@ -87,6 +87,28 @@ In plain words: the Agent now tells a screen when a sign-in that it may show sta
 4. **Not decided here:** where the Agent reads the list of prompt hosts (today it has none), which the greeter's issue decides.
 5. **Built and tested** together with this amendment for the rules above, on a private bus; **not yet tested** under a real greetd and KDE's lock screen (point 5 of spike 0317).
 6. **Tests the code names:** `a_watcher_is_told_when_its_own_prompt_starts`, `a_prompt_host_is_told_only_about_root_logins`, `only_the_opener_may_report_or_close_a_prompt`, `watchers_are_limited_per_user`.
+
+### Amendment 2026-11-22 (accepted), second: the Agent says how each method ended
+
+The screens of Linux Hello show one tile per method of a sign-in attempt, and the boards of the [UI proposals](../notes/ui-proposals-2026-11.md) say on each tile how that method ended: "Fingerprint: Matched", "Face: Not recognised", "PIN: Wrong PIN". The Agent runs the fingerprint, the face and the PIN at the same time and knows how each ended, but its signals do not say: `Result` reports the attempt as a whole and names no method, and `ActiveMethods` only lists the methods still running. The PAM module can tell a wrong PIN because it sent the PIN itself; a screen that did not send it cannot ([linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338)).
+
+In plain words: when one method of an attempt ends, the Agent now tells the subscribers which one, and how.
+
+| Option | Pros | Cons |
+| :-- | :-- | :-- |
+| **A. A new unicast signal `MethodEnded`, one per method that ends** | Additive; every tile can follow its own method as it happens; nothing existing changes shape | One more signal to confine and test |
+| B. A method field in `Result` | No new signal | Changes the shape of `Result`, which the PAM module reads; says only how the winning method ended, not the others |
+| C. Each screen infers it from `ActiveMethods` | No change to the Agent | Cannot tell a mismatch from a reader that went away, or a wrong PIN from a PIN sent by someone else |
+
+**Option A.**
+
+1. **The signal.** `MethodEnded(s prompt_id, s method, s outcome, s reason, u retry_after)`, unicast to each connection subscribed to the prompt, like every signal of the Agent. `method` is `pin`, `fingerprint` or `face`.
+2. **`outcome`**, a closed set: `matched` (the person was recognised), `failed` (the method ran and did not recognise them), `unavailable` (the method could not run, for example the reader went away), `locked-out` (too many wrong PINs). A new value is an additive change; a client that does not know one treats it as `failed`.
+3. **`reason`** is the closed set of reasons of `Result` (amendment of 2026-11-17, point 4), for `failed` only: `not-recognised`, `too-dark`, `no-face`, and so on; empty otherwise. A wrong PIN is `failed` with `not-recognised`; the screen words it "Wrong PIN" because the method is the PIN. **`retry_after`** is the seconds left of a lockout for `locked-out`, else 0.
+4. **When.** The Agent sends it as soon as one method ends, before `ActiveMethods` shrinks, and for the winning method before `Result`. A method that stops because another one won, or because the prompt closed, sends nothing: `Result` already says why.
+5. **What it is not.** Like the other state signals it is for the person's eyes and decides nothing; a client never derives authority from it. `GetState` does not carry it: a screen that subscribes after a method ended does not learn how it ended.
+6. **No client may send it.** `ReportState` refuses `MethodEnded` as it refuses `Closed`, `EnrolProgress` and `PromptStarted`.
+7. **Tests the code names:** `each_method_that_ends_is_reported_with_its_outcome`, `a_method_stopped_because_another_won_reports_nothing`, `a_client_cannot_report_method_ended`.
 
 ## Consequences
 
