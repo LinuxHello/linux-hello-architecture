@@ -14,7 +14,7 @@ date: 2026-11-21
 
 ## Status
 
-Accepted, 2026-11-21. The maintainer set the requirement on 2026-11-21; the lead wrote it down, and it was accepted on the maintainer's standing approval of the lead's recommendations. It applies to the login screen, the lock screen, the System Settings page, `linuxhello-ctl` and the PAM module, and to every Linux Hello client that comes later.
+Accepted, 2026-11-21. The maintainer set the requirement on 2026-11-21; the lead wrote it down, and it was accepted on the maintainer's standing approval of the lead's recommendations. It applies to the login screen, the lock screen, the System Settings page, `linuxhello-ctl` and the PAM module, and to every Linux Hello client that comes later. Amendment accepted 2026-11-22 on the same standing approval: how a part opens the settings page for the person (see *Amendment 2026-11-22*).
 
 ## Context
 
@@ -50,6 +50,17 @@ Running a program for this has three costs:
 5. **Which bus.** The PAM module uses the fixed system-bus socket, never an address from the environment ([ADR-0023](0023-pam-module-and-login-failure.md), amendment of 2026-11-21, point 1), because `sudo` keeps the invoking user's environment. A client that runs as the person themself, such as `linuxhello-ctl` or a screen in their session, may use the standard system-bus address. Whoever could change that environment is the same person.
 6. **What is not covered.** The Agent itself still starts Howdy's compare script, a fixed program with a fixed command line and an empty environment, until Howdy gets a helper service of its own (linux-hello#272). The install and test scripts in `scripts/` are not clients. Tests may start programs, such as a private `dbus-daemon`.
 7. **How it is checked.** Each client crate has a test that reads its own sources and fails on a way to start a program outside test code. The tests are `the_cli_starts_no_program` in `linuxhello-ctl` and `the_pam_module_starts_no_program` in `pam_linuxhello`. A Plasma part gets the same test when it is created.
+
+### Amendment 2026-11-22 (accepted): opening the settings page for the person
+
+A small part in the person's session will show a desktop notification such as "Your PIN expires in 5 days", with a button that opens Linux Hello's page in System Settings ([#324](https://github.com/LinuxHello/linux-hello/issues/324)). Opening that page means that a program, System Settings, starts. Point 2 says a client never starts another program, so this amendment says how the button may do it.
+
+In plain words: the part asks the desktop, over the bus, to open the page, and the desktop starts System Settings as it would for a click in the menu. The part itself starts nothing and reads nothing back.
+
+1. **Allowed:** one bus call to a service of the desktop that opens an application or an address for the person. Examples are the desktop portal's `org.freedesktop.portal.OpenURI` (xdg-desktop-portal, the service through which sandboxed apps open links) and the D-Bus activation of System Settings itself (`org.freedesktop.Application.Activate` on its well-known name). Which one works on Plasma 6.6 and 6.8 is checked when the part is built.
+2. **Not allowed:** starting `systemsettings`, `kcmshell6` or anything else from the part, also not through a library that runs the program in the part's own process (KDE's `KIO::ApplicationLauncherJob` does that), and not through a shell.
+3. **Why the difference.** The three costs of the context come from a program that the client starts and whose output it trusts. Here the desktop starts a program it already knows by its desktop file, the part does not choose a path, and nothing the program prints comes back to the part. The notification carries no secret and decides nothing.
+4. **The check of point 7** applies to the part: its sources contain no way to start a program.
 
 ## Consequences
 
