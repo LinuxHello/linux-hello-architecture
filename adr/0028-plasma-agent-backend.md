@@ -14,7 +14,7 @@ date: 2026-11-22
 
 ## Status
 
-Proposed, 2026-11-22, for [linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338). Not accepted on the standing approval of the lead's recommendations, because the recommended option may need a third module that is allowed `unsafe` code, and invariant 4 of `linux-hello`'s AGENTS.md says that needs the maintainer's review. Nothing of it is built.
+Proposed, 2026-11-22, for [linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338). The spike of point 1 ran the same day (see *Spike result*): the recommended option **does** need a third module that is allowed `unsafe` code, and invariant 4 of `linux-hello`'s AGENTS.md says that needs the maintainer's review. So this ADR waits for that review and is not accepted on the standing approval of the lead's recommendations. Nothing of it is built.
 
 ## Context
 
@@ -39,6 +39,18 @@ QML cannot speak D-Bus by itself, and a screen may not start a program to do it 
 2. **If `unsafe` is needed in Linux Hello's crate,** it is confined to one module that holds only the `#[cxx_qt::bridge]` declaration, listed in `scripts/ci/unsafe-allowlist.txt` after the maintainer's review, as invariant 4 requires.
 3. **Where it lives.** A crate `linuxhello-plasma` (a new crate name is a one-way door; it is decided with this ADR) in `plasma/`, outside the main Cargo workspace, with a CI job of its own on a runner that installs Qt's development packages. The main workspace's gates stay as they are and need no Qt.
 4. **What it does.** One QML-facing object per prompt that the screen gives a prompt id or asks to watch (`WatchPrompts`), and that fills the Auth Prompt's state object from `Ping`, `Subscribe`, `GetState` and the signals `MethodsAvailable`, `ActiveMethods`, `State`, `Result` and `MethodEnded`. It starts no program.
+
+## Spike result
+
+Run on 2026-11-22 in the desktop test VM (Ubuntu 26.04, Qt 6.10.2, Rust 1.93 from Ubuntu's archive). A small crate defined one QML object, `AgentState`, with a property `reachable` and a method `ping()` that asks the real Linux Hello Agent in the VM over the system bus (`org.freedesktop.DBus.Peer.Ping`, with zbus 6.5 as the rest of the project uses it). A QML file created the object, called `ping()` and printed the property.
+
+1. **`#![forbid(unsafe_code)]` does not hold.** With it at the crate root the build fails: cxx-qt's macro expands the bridge into `unsafe` blocks, `unsafe` functions and functions with `export_name` inside Linux Hello's crate, and the compiler points at our own lines (`#[qproperty]`, `#[qinvokable]`). cxx-qt 0.10 cannot be used without allowing `unsafe` in the crate.
+2. **It can be confined to one module that holds only the declaration.** With `#![deny(unsafe_code)]` at the crate root (as the workspace sets it), a module `bridge.rs` with `#![allow(unsafe_code)]` that contains only the `#[cxx_qt::bridge]` declaration and a re-export, and the Rust behind the object in another module under `deny`, the crate builds and runs. This is the pattern of the TPM provider and the PAM module: one small module allowed `unsafe`, the rest not. cxx-qt requires the Rust type to sit directly beside the bridge (`super::T`), which the re-export satisfies.
+3. **It works.** QML printed `REACHABLE true` with the Agent running and `REACHABLE false` with its unit masked (a stopped Agent is started again by D-Bus activation, so it answers).
+4. **cargo-deny passes** with `linux-hello`'s own `deny.toml`: advisories, bans, licences and sources all `ok`. cxx, cxx-qt, cxx-qt-lib and cxx-qt-build are under MIT or Apache-2.0. (zbus 5 failed the advisories check on two unmaintained crates; zbus 6, which the project uses, passes.)
+5. **The build** needs Qt's development packages (`qt6-base-dev`, `qt6-declarative-dev`, `qt6-base-dev-tools`) and a C++ compiler, and `QMAKE` pointing at Qt 6's `qmake`. cxx-qt-build needs no CMake.
+
+What the maintainer decides: whether a third module allowed `unsafe` code, holding only a cxx-qt bridge declaration, goes on `scripts/ci/unsafe-allowlist.txt`. If yes, option A as described; if no, option B, C++ with QtDBus.
 
 ## Consequences
 
