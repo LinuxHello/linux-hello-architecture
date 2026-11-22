@@ -2,7 +2,7 @@
 type: spike
 subject: Can Linux Hello's own login screen be a QML greeter for greetd that starts Plasma and any other desktop?
 artifact: spike
-status: open
+status: answered
 owner: "@atterdag"
 concepts: [greetd, greeter, login-screen, pam, pam-linuxhello, plasma, wayland]
 tags: [spike, plasma, ux]
@@ -31,7 +31,7 @@ Two working days.
 
 ## Method
 
-Steps 3 and 5 were run in part on 2026-11-22, on a test VM that has no desktop, with a stand-in for the greeter (see *Evidence*). Steps 1, 2, 4 and 6, and the rest of step 5, are not run yet.
+Steps 1 to 5 were run on 2026-11-22: first the protocol half on a test VM without a desktop, then everything on a second test VM with Plasma (see *Evidence*). Step 5 is run except for the fingerprint and the lockout. Step 6 is answered from what the run showed and from reading, item by item; none of it is built.
 
 1. In the test VM (Ubuntu 26.04, Plasma 6.6), install greetd from the distribution and a small Wayland compositor to show the greeter (for example `cage`, which shows one program full screen). Record the versions.
 2. Write a minimal greeter in QML with a small Rust or C++ part that speaks greetd's protocol: `create_session`, `post_auth_message_response`, `start_session`, `cancel_session`. It shows the text of each question above a field, and info and error lines in two colours. It must start no other program and run no command (the maintainer's rule in the UI proposals).
@@ -64,6 +64,40 @@ Three findings:
 2. **The fall-through to the password works under greetd** for an empty answer and for a stopped Agent, as ADR-0023 decides. The installer's line in `login` is enough; greetd's file needs no line of its own. A first run that added one ran the module twice and asked for the PIN twice.
 3. **Not shown:** whether `start_session` then starts the session. greetd starts it only once the greeter has exited; in this run no session of the test user appeared after the stand-in was ended, because greetd started the greeter again. This needs a real greeter and a desktop.
 
+### Run of 2026-11-22 on a VM with Plasma (`make vm-test-greeter`)
+
+A second test VM got Plasma 6.6.7 on Wayland from Ubuntu 26.04's archive, without SDDM, and greetd 0.10.3 with cage 0.2.1. cage is a Wayland compositor that shows one program full screen, the greeter. Linux Hello was installed from `main` with its prototype installer, including the line in `login`. The greeter is spike code, never shipped: a QML window with a small Python part (PySide6 6.10) that speaks greetd's socket protocol. It starts no program itself; greetd starts the chosen desktop. The window shows the question above a field, information lines in blue and error lines in red. It reads the desktops from `/usr/share/wayland-sessions`, the same files GDM and SDDM read. For a run without a person, the Python part types the answers itself after a pause, so that a screenshot of the VM's screen shows each state.
+
+| State | What the greeter showed | Check |
+| :-- | :-- | :-- |
+| The person is chosen | the module's own question, "PIN:", above a hidden field | PASS |
+| The right PIN, Plasma chosen | signed in; greetd started Plasma, and `kwin_wayland` and `plasmashell` ran as the person | PASS |
+| A wrong PIN | the error line "Wrong PIN." in red, then the failure | PASS |
+| The Agent stopped | the information line "Linux Hello is not available. Use your account password." in blue, then "Password:" | PASS |
+| The right PIN, Weston chosen | greetd started Weston, a second desktop, from the same greeter | PASS |
+| The TPM cleared | the error line "The TPM no longer holds the key that your PIN opens…" in red, above the PIN question, before anything was typed | PASS |
+| An empty Enter with the fingerprint | not run: the VM has no fingerprint reader | — |
+| A lockout | not run | — |
+
+Findings of this run:
+
+1. **cage 0.2.1 crashes if the window asks for full screen before its first frame** (an assertion in cage's `schedule_configure`). Dropping the request was enough, because cage shows its one window full screen anyway.
+2. **When the TPM was cleared, the module still asks for the PIN.** The error line says the PIN cannot be used, and the question asks for it anyway. Not asking for the PIN in that case is a change to the PAM module, not to the greeter.
+3. **The installer adds Linux Hello to `login` only with `--console`.** greetd's PAM file includes `login`, so the greeter gets the module only after `install.sh --console`. The greeter's installer needs its own step.
+4. **greetd restarts the greeter when it exits without starting a session** ("greeter exited without creating a session" in greetd's journal), so a crashed greeter comes back by itself.
+
+What a login screen must do besides signing in (step 6). None of these is built in the spike greeter; this is what the run and the reading say about each:
+
+| Need | Status |
+| :-- | :-- |
+| Restart after a crash | Done by greetd itself (finding 4) |
+| The list of desktops | Done: read from `/usr/share/wayland-sessions`; X11 sessions in `/usr/share/xsessions` are not tried |
+| The list of users | Missing: AccountsService (`org.freedesktop.Accounts` on the bus) lists them, as other greeters do |
+| Shutdown and restart | Missing: logind's `PowerOff` and `Reboot` on the bus; whether polkit allows them to the greeter's session is not checked |
+| Keyboard layout | Missing: cage takes the layout from `XKB_DEFAULT_LAYOUT`; choosing one in the greeter is not tried |
+| On-screen keyboard and screen reader | Open: not tried under cage |
+| A second monitor | Open: not tried; cage has its own rules for more than one output |
+
 ## Answer
 
-**Partly yes, so far.** greetd hands Linux Hello's question and lines to the greeter with their kind, and the fall-through to the password works under it. What is left decides the spike: a QML greeter that shows them, and starting Plasma on Wayland and one other desktop (steps 1, 2, 4 and 6), which need a VM with a desktop.
+**Yes.** A QML greeter under greetd signs a person in with `pam_linuxhello` and starts Plasma on Wayland and another desktop (Weston). It shows the module's question word for word, its information lines and its error lines with their kind, including a condition before anything is typed. This holds point 1 of the ADR-0016 amendment of 2026-11-21: Linux Hello's login screen is its own greeter for greetd. What a real login screen needs besides that (the users, shutdown, keyboard layout, accessibility, monitors) is listed above as work for the greeter ([#319](https://github.com/LinuxHello/linux-hello/issues/319)), not as a reason against it.
