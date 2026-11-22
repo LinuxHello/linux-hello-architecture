@@ -14,7 +14,7 @@ date: 2026-11-22
 
 ## Status
 
-Accepted, 2026-11-22, on the maintainer's decision the same day (proposed 2026-11-22). The spike of point 1 ran first (see *Spike result*): option A needs a third module that is allowed `unsafe` code, and the maintainer allowed one, holding only the cxx-qt bridge declaration, as invariant 4 of `linux-hello`'s AGENTS.md requires. For [linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338). Not built yet.
+Accepted, 2026-11-22, on the maintainer's decision the same day (proposed 2026-11-22). The spike of point 1 ran first (see *Spike result*): option A needs a third module that is allowed `unsafe` code, and the maintainer allowed one, holding only the cxx-qt bridge declaration, as invariant 4 of `linux-hello`'s AGENTS.md requires. For [linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338). Amendment accepted 2026-11-22 on the maintainer's standing approval of the lead's recommendations: the greeter (see *Amendment 2026-11-22*).
 
 ## Context
 
@@ -39,6 +39,17 @@ QML cannot speak D-Bus by itself, and a screen may not start a program to do it 
 2. **The `unsafe` module.** It is confined to one module that holds only the `#[cxx_qt::bridge]` declaration and a re-export, listed in `scripts/ci/unsafe-allowlist.txt`; the crate root sets `#![deny(unsafe_code)]`, and `scripts/ci/unsafe-policy.sh` checks the crate like the two others. Invariant 4 names it as the third audited module.
 3. **Where it lives.** A crate `linuxhello-plasma` (a new crate name is a one-way door; it is decided with this ADR) in `plasma/linuxhello-plasma/`, outside the main Cargo workspace, built as a QML plugin that both Linux Hello's own greeter and KDE's lock screen can import (`io.github.LinuxHello.AgentLink`). It has a CI job of its own that builds in an Ubuntu 26.04 container with Qt and Rust from Ubuntu's archive, because the Ubuntu 24.04 runners have Qt 6.4. The main workspace's gates stay as they are and need no Qt.
 4. **What it does.** One QML-facing object per prompt that the screen gives a prompt id or asks to watch (`WatchPrompts`), and that fills the Auth Prompt's state object from `Ping`, `Subscribe`, `GetState` and the signals `MethodsAvailable`, `ActiveMethods`, `State`, `Result` and `MethodEnded`. It starts no program.
+
+### Amendment 2026-11-22 (accepted): the greeter
+
+Linux Hello's own login screen is a *greeter* for greetd, a small login service that runs PAM and starts the chosen desktop, and leaves the screen to the greeter ([ADR-0016](0016-prompt-hosts.md), amendment of 2026-11-21; [spike 0311](../spikes/0311-greetd-greeter.md) answered yes). The greeter must talk to greetd over greetd's socket and, to say whether Linux Hello runs, to the Agent; QML can do neither ([linux-hello#319](https://github.com/LinuxHello/linux-hello/issues/319)).
+
+In plain words: greetd's protocol goes into the same Rust plugin as the Agent Link, and a very small program opens the greeter's QML window.
+
+1. **greetd in the plugin.** The QML plugin `io.github.LinuxHello.AgentLink` gets a second object, `Greetd`, that speaks greetd's socket protocol (`create_session`, `post_auth_message_response`, `start_session`, `cancel_session`, from greetd-ipc(7)) and lists the installed desktops from `/usr/share/wayland-sessions` and `/usr/share/xsessions`. It is declared in the same bridge module, so no new module is allowed `unsafe` code.
+2. **The program.** A crate and program `linuxhello-greeter` in `plasma/linuxhello-greeter/`, in the same Cargo workspace as the plugin (`plasma/`), that only creates the Qt application and loads the greeter's QML window. It uses cxx-qt-lib's safe calls and declares no bridge, so its root sets `#![forbid(unsafe_code)]`. The name is a one-way door and is decided here.
+3. **How greetd starts it.** greetd runs it under cage, a compositor that shows one program full screen, as greetd's own user: `command = "cage -s -- linuxhello-greeter"` in `/etc/greetd/config.toml`. The greeter starts no other program; greetd starts the chosen desktop (ADR-0026).
+4. **PAM.** greetd's PAM file includes `login`, so the greeter gets Linux Hello through Linux Hello's line in `login`, which the installer adds when it installs the greeter ([linux-hello#337](https://github.com/LinuxHello/linux-hello/issues/337)).
 
 ## Spike result
 
