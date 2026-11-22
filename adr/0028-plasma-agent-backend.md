@@ -2,7 +2,7 @@
 type: adr
 subject: In which language the Plasma screens reach the Agent over D-Bus, given that QML cannot do it alone
 artifact: adr
-status: proposed
+status: accepted
 owner: "@atterdag"
 concepts: [plasma, qml, dbus, cxx-qt, qtdbus, unsafe, auth-prompt, greeter, kcm]
 tags: [adr, plasma, security]
@@ -14,7 +14,7 @@ date: 2026-11-22
 
 ## Status
 
-Proposed, 2026-11-22, for [linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338). The spike of point 1 ran the same day (see *Spike result*): the recommended option **does** need a third module that is allowed `unsafe` code, and invariant 4 of `linux-hello`'s AGENTS.md says that needs the maintainer's review. So this ADR waits for that review and is not accepted on the standing approval of the lead's recommendations. Nothing of it is built.
+Accepted, 2026-11-22, on the maintainer's decision the same day (proposed 2026-11-22). The spike of point 1 ran first (see *Spike result*): option A needs a third module that is allowed `unsafe` code, and the maintainer allowed one, holding only the cxx-qt bridge declaration, as invariant 4 of `linux-hello`'s AGENTS.md requires. For [linux-hello#338](https://github.com/LinuxHello/linux-hello/issues/338). Not built yet.
 
 ## Context
 
@@ -31,13 +31,13 @@ QML cannot speak D-Bus by itself, and a screen may not start a program to do it 
 | B. C++ with Qt's own D-Bus classes (QtDBus), as KDE's own settings pages do | What KDE developers and packagers expect; no new Rust dependency; QtDBus is part of Qt | A second compiled language, with no memory safety and none of the repository's gates; the interface's names written a second time; the settings page would handle the PIN in C++ |
 | C. Python with PySide6 | Quickest to write; the greetd spike used it | A Python runtime inside the login screen and the lock screen; slower start; a third language to package and confine |
 
-## Decision (proposed)
+## Decision
 
-**Option A, Rust with cxx-qt, if a short spike confirms two things;** otherwise option B.
+**Option A, Rust with cxx-qt,** with one module allowed `unsafe` code that holds only the bridge declaration (the spike showed cxx-qt needs it, and the maintainer allowed it).
 
 1. **The spike** (half a day, in the desktop test VM): a cxx-qt object that exposes the Agent's state for one prompt to QML, built with `cxx-qt-build` against Ubuntu 26.04's Qt 6.10. It answers: does `#![forbid(unsafe_code)]` hold in Linux Hello's crate, or does the bridge need `#[allow(unsafe_code)]` there; and do cxx-qt and cxx pass `cargo deny check` with the project's licence rules.
-2. **If `unsafe` is needed in Linux Hello's crate,** it is confined to one module that holds only the `#[cxx_qt::bridge]` declaration, listed in `scripts/ci/unsafe-allowlist.txt` after the maintainer's review, as invariant 4 requires.
-3. **Where it lives.** A crate `linuxhello-plasma` (a new crate name is a one-way door; it is decided with this ADR) in `plasma/`, outside the main Cargo workspace, with a CI job of its own on a runner that installs Qt's development packages. The main workspace's gates stay as they are and need no Qt.
+2. **The `unsafe` module.** It is confined to one module that holds only the `#[cxx_qt::bridge]` declaration and a re-export, listed in `scripts/ci/unsafe-allowlist.txt`; the crate root sets `#![deny(unsafe_code)]`, and `scripts/ci/unsafe-policy.sh` checks the crate like the two others. Invariant 4 names it as the third audited module.
+3. **Where it lives.** A crate `linuxhello-plasma` (a new crate name is a one-way door; it is decided with this ADR) in `plasma/linuxhello-plasma/`, outside the main Cargo workspace, built as a QML plugin that both Linux Hello's own greeter and KDE's lock screen can import (`io.github.LinuxHello.AgentLink`). It has a CI job of its own that builds in an Ubuntu 26.04 container with Qt and Rust from Ubuntu's archive, because the Ubuntu 24.04 runners have Qt 6.4. The main workspace's gates stay as they are and need no Qt.
 4. **What it does.** One QML-facing object per prompt that the screen gives a prompt id or asks to watch (`WatchPrompts`), and that fills the Auth Prompt's state object from `Ping`, `Subscribe`, `GetState` and the signals `MethodsAvailable`, `ActiveMethods`, `State`, `Result` and `MethodEnded`. It starts no program.
 
 ## Spike result
@@ -50,7 +50,7 @@ Run on 2026-11-22 in the desktop test VM (Ubuntu 26.04, Qt 6.10.2, Rust 1.93 fro
 4. **cargo-deny passes** with `linux-hello`'s own `deny.toml`: advisories, bans, licences and sources all `ok`. cxx, cxx-qt, cxx-qt-lib and cxx-qt-build are under MIT or Apache-2.0. (zbus 5 failed the advisories check on two unmaintained crates; zbus 6, which the project uses, passes.)
 5. **The build** needs Qt's development packages (`qt6-base-dev`, `qt6-declarative-dev`, `qt6-base-dev-tools`) and a C++ compiler, and `QMAKE` pointing at Qt 6's `qmake`. cxx-qt-build needs no CMake.
 
-What the maintainer decides: whether a third module allowed `unsafe` code, holding only a cxx-qt bridge declaration, goes on `scripts/ci/unsafe-allowlist.txt`. If yes, option A as described; if no, option B, C++ with QtDBus.
+The maintainer allowed the third module on 2026-11-22, so option A stands.
 
 ## Consequences
 
