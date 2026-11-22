@@ -172,6 +172,10 @@ A Linux security module that limits what each program may do: which files, devic
 
 A Linux kernel feature that lets small programs loaded at run time take security decisions. *Tetragon* needs it to block actions and not only report them. It is switched on with an option on the kernel command line.
 
+### cage
+
+A Wayland compositor (the program that draws windows on screen) that shows one program on the whole screen and nothing else. greetd runs Linux Hello's greeter inside it, because a greeter needs a compositor before any desktop runs ([ADR-0028](../adr/0028-plasma-agent-backend.md), amendment of 2026-11-22).
+
 ### D-Bus
 
 The message system that programs on a Linux desktop use to call each other. There are two kinds of bus. The **system bus** is one per machine and connects system services with programs of all users. The **session bus** is one per logged-in user and connects the programs of that session. Linux Hello's Agent is on the system bus, because only the system bus can be reached from every place a PAM module runs, including the login screen and `sudo` ([spike 0007](../spikes/0007-pam-dbus-method-state.md), [ADR-0014](../adr/0014-agent-bus.md)).
@@ -230,7 +234,7 @@ KDE's store for passwords and tokens, an implementation of the *Secret Service*.
 
 ### Login manager, greeter
 
-The program that shows the login screen after boot and starts the user's session. The part the user sees is called the greeter. Plasma uses SDDM, and Plasma 6.8 brought the Plasma Login Manager, a fork of SDDM. Linux Hello's own login screen is a greeter for greetd, because SDDM answers the PAM module's questions itself and never shows them; it is decided but not built, and depends on [spike 0311](../spikes/0311-greetd-greeter.md) ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21). In SDDM, `pam_linuxhello` still works through PAM text only.
+The program that shows the login screen after boot and starts the user's session. The part the user sees is called the greeter. Plasma uses SDDM, and Plasma 6.8 brought the Plasma Login Manager, a fork of SDDM. Linux Hello's own login screen is a greeter for greetd, because SDDM answers the PAM module's questions itself and never shows them; [spike 0311](../spikes/0311-greetd-greeter.md) showed that it works, and the greeter, the program `linuxhello-greeter`, is built for the prototype ([ADR-0016](../adr/0016-prompt-hosts.md), amendment of 2026-11-21; [ADR-0028](../adr/0028-plasma-agent-backend.md), amendment of 2026-11-22; linux-hello#319). In SDDM, `pam_linuxhello` still works through PAM text only.
 
 ### logind
 
