@@ -49,6 +49,7 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
 
             plasma = container "Plasma Integration" "Prompts, greeter and lock-screen integration, enrolment and settings" "Rust/cxx-qt, QML, KCM" {
                 authPrompt = component "Auth Prompt QML Component" "Shared method indicator and switcher; renders Agent auth state (UX1-UX5). One QML module in the system QML directory, imported by every host below (spike 0009)" "QML"
+                agentLink = component "Agent Link" "The QML plugin io.github.LinuxHello.AgentLink: follows a prompt over the Agent's D-Bus interface (Ping, WatchPrompts, Subscribe, GetState and the state signals) and hands the Auth Prompt its state; Rust with cxx-qt, one bridge module allowed unsafe code (ADR-0028)" "Rust, cxx-qt"
                 lockPrompt = component "Lock Screen Prompt" "Linux Hello's shared prompt in a slot of KDE's lock screen, showing the live state of every method. Needs KDE to add the slot; until then the lock screen shows only the PAM module's text. Talks only to the Agent through the shared prompt; runs no command (ADR-0016, amendment of 2026-11-21). Not built" "QML"
                 promptUi = component "Prompt UI" "In-session presence, verification and credential/provider-choice dialogs, outside the calling app. Shows the relying-party id from the request and labels from the Credential Index, never client text; confined process (own AppArmor profile, not dumpable) started by the Agent; a click is never a verification (spike 0120, ADR-0020)" "QML"
                 greeter = component "Linux Hello Greeter" "Linux Hello's own login screen: a greeter for greetd that shows every PAM question and line with its kind, lists the installed desktops from the session files and starts the chosen one. Talks only to greetd's socket and, through the shared prompt, to the Agent; runs no command. Decided in ADR-0016 (amendment of 2026-11-21) if spike 0311 confirms it, otherwise an own SDDM theme. Not built" "QML"
@@ -122,7 +123,8 @@ workspace "Linux Hello" "Biometric- and PIN-gated passkeys and secrets for the L
         lockScreen -> lockPrompt "Shows in a slot of its lock screen; needs a change in KDE" "QML"
         lockPrompt -> authPrompt "Embeds"
         promptUi -> authPrompt "Embeds"
-        authPrompt -> dbusApi "Subscribes to auth state, selects method, over the system bus (ADR-0014)" "D-Bus"
+        authPrompt -> agentLink "Reads the state of the prompt it shows"
+        agentLink -> dbusApi "Watches for and subscribes to prompts, reads their state, over the system bus (ADR-0014, ADR-0028)" "D-Bus"
         systemSettings -> kcm "Hosts" "KCM"
         systemSettings -> usersKcmPatch "Shows entries on Users page"
         usersKcmPatch -> faceEnrol "Opens"
