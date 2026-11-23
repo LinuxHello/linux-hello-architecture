@@ -86,7 +86,7 @@ In plain words: the module opens the system bus socket itself and speaks the D-B
 
 Not decided here: a grace window that waits for a finger before asking for the PIN, and policy keys for the deadlines; both can be added after the prototype has been tried.
 
-### Amendment 2026-11-23 (proposed): the Agent checks the caller's logind session before it starts a sensor
+### Amendment 2026-11-23 (accepted): the Agent checks the caller's logind session before it starts a sensor
 
 Today only the PAM module decides whether a `sudo` or a session unlock happens at this machine. It reads two facts, `PAM_RHOST` (the name of the remote host, which sshd sets) and the session file of [logind](../arc42/12-glossary.md#logind) (the systemd service that keeps one record per login session, with its seat and whether it is remote), and when the answer is "not here" it never asks the Agent. That check runs inside the program that asks, so it protects only against programs that choose to run it. This amendment answers finding R-04 of the [security review of 22 November 2026](https://linuxhello.github.io/security-review.html) and asks the Agent to make the same check for itself.
 
@@ -111,6 +111,6 @@ Not decided here: whether `unlock` (the lock screen, which runs inside the user'
 - With Linux Hello down, the account password alone satisfies a context that policy sets to two factors. This is the price of never locking the user out; the audit log records the fall-through ([issue 132](https://github.com/LinuxHello/linux-hello/issues/132)).
 - The lock screen runs fingerprint and smartcard as separate PAM services in parallel with the password on Plasma ([spike 0007](../spikes/0007-pam-dbus-method-state.md)); how `pam_linuxhello` sits beside them is left to the prompt-host decision of [ADR-0016](0016-prompt-hosts.md).
 - `workspace.dsl` and arc42 sections 5 and 8 change: the orchestrator is an Agent component, and the PAM module has no parallel methods of its own.
-- The Agent depends on logind for face and fingerprint in the `sudo` and `session` contexts (amendment of 2026-11-23, if accepted): without it, or on a machine that is not run by systemd, those two contexts offer the PIN only. Its bus policy and profile gain one narrow rule for `org.freedesktop.login1`.
+- The Agent depends on logind for face and fingerprint in the `sudo` and `session` contexts (amendment of 2026-11-23): without it, or on a machine that is not run by systemd, those two contexts offer the PIN only. Its bus policy and profile gain one narrow rule for `org.freedesktop.login1`.
 
 **Follow-up:** briefs for the thin client with its deadlines, the Agent-side orchestrator, the shipped PAM snippets with `pam_unix` after the module, VM runs in the four contexts (login, unlock, `sudo`, console), and the model and arc42 changes.
