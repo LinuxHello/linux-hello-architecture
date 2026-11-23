@@ -57,14 +57,14 @@ These rules apply to the whole code base:
 
 [AppArmor](12-glossary.md#apparmor) is the kernel feature that limits each program to the files and devices its profile lists. Linux Hello ships one profile per service and one for `linuxhello-ctl`, all in enforce mode, in which AppArmor blocks what the profile does not allow. The profiles say:
 
-- Only the TPM provider and the Agent may open the TPM, `/dev/tpmrm0`. Only the Agent's face path may run Howdy, and only Howdy, started by the Agent's helper, may open the camera. Only the `uhid` helper may open `/dev/uhid`.
+- Only the TPM provider may open the TPM, `/dev/tpmrm0`; the Agent reaches it through the provider's socket. Only the Agent's face path may run Howdy, and only Howdy, started by the Agent's helper, may open the camera. Only the `uhid` helper may open `/dev/uhid`.
 - Every profile may read the administrator's policy files but not change them. The user's own policy layer is kept by the Agent in its state directory and changed over D-Bus, so no other program needs to write it ([ADR-0018](../adr/0018-user-policy-layer.md)).
 - No other program may inspect the Agent or the providers, for example with `ptrace` or by reading `/proc/<pid>/mem`.
-- CI loads every profile, runs the property tests under them, and fails on any blocked action or on a profile left in a mode that only logs.
+- The goal is that CI loads every profile, runs the property tests under them, and fails on any blocked action or on a profile left in a mode that only logs. Today CI loads the Agent's profile in its `confinement` job and runs the confinement checks under it; that job is not one of the jobs of the quality gate, so a failure there does not stop a merge. The provider's profile is checked by the maintainer in a virtual machine, not in CI.
 
 Each service checks at start that its profile is loaded in enforce mode, and refuses to start otherwise. A Linux Hello that is missing is safer than one running without its limits: the account password still works.
 
-*State:* the Agent's profile is built and tested on Ubuntu 24.04 and 26.04, and its checks run in CI ([section 7](07-deployment-view.md)). The other profiles are not written yet.
+*State:* the profiles of the Agent and of the TPM provider are built. The Agent's is tested on Ubuntu 24.04 and 26.04, and its checks run in CI ([section 7](07-deployment-view.md)); the provider's is tested in a virtual machine only. The other profiles are not written yet.
 
 ### Tetragon, optional
 

@@ -88,7 +88,7 @@ Not decided here: the command and the settings page that call these, and the res
 
 The policy has a key `pin.history`: how many earlier PINs a person may not use again. Without it a person told to change their PIN can "change" it back to the old one. Enforcing it needs the Agent to remember something about the earlier PINs, and what it remembers is stored data in a format that later versions must read, so this amendment fixes it.
 
-In plain words: when a PIN is changed, the Agent keeps a fingerprint of the PIN that was just replaced, made with the same slow function as the PIN itself but with a salt of its own. The next time the PIN is changed, the new PIN is stretched with each remembered salt and compared with the fingerprints, and refused when it matches one. The fingerprints cannot be used to open anything, and finding the PIN behind one is as slow as guessing a PIN against the TPM's own key material offline would be.
+In plain words: when a PIN is changed, the Agent keeps a fingerprint of the PIN that was just replaced, made with the same slow function as the PIN itself but with a salt of its own. The next time the PIN is changed, the new PIN is stretched with each remembered salt and compared with the fingerprints, and refused when it matches one. The fingerprints cannot be used to open anything. They can, however, be used to guess a former PIN offline, by anyone who can read the record file; the amendment of 2026-11-23 below says how fast that is and why it matters.
 
 1. **What may not be reused.** The current PIN and the last `pin.history` PINs that were replaced. With `pin.history = 0` nothing is remembered and only the current PIN is refused.
 2. **What is stored.** In the user's record (`pin-root.toml`), a list of entries, newest first, each with its own random 16-byte salt and the Argon2id result (32 bytes) of the PIN with that salt and the cost the record then used. The salt of an entry is **never the salt of a root key**, so an entry is not the authorisation value of any key, present or past. An older record without the list is read as an empty history, and a record with a malformed entry is refused as untrusted, as every other malformed field is.
@@ -98,6 +98,18 @@ In plain words: when a PIN is changed, the Agent keeps a fingerprint of the PIN 
 6. **`SetPin`** starts an empty history. A reset ([ADR-0003](0003-destructive-reset.md)) deletes the record and so the history with it.
 7. **Expiry** (`pin.expiry_days`) is not decided here: it needs the Agent to say at sign-in that a PIN has expired, which is a decision for the sign-in flow. (Decided in the amendment of 2026-11-21.)
 8. **Tests the code will name:** `a_replaced_pin_cannot_be_used_again_within_the_history`, `the_history_is_only_asked_after_the_current_pin_is_right`, `the_history_never_holds_a_key_authorisation`, `an_old_record_without_a_history_is_read`, `a_record_with_a_malformed_history_is_untrusted`, `a_change_that_fails_leaves_the_history_alone`.
+
+
+### Amendment 2026-11-23 (accepted): what the PIN history lets an attacker do
+
+The amendment of 2026-11-20 said that finding the PIN behind a history entry is as slow as guessing a PIN against the TPM's key material offline. That comparison is wrong, and this amendment replaces it. It is the answer to finding R-11 of the [security review of 22 November 2026](https://linuxhello.github.io/security-review.html).
+
+In plain words: the current PIN can only be tested by the TPM, which counts wrong tries and locks, so nobody can guess it at their own speed. A history entry is different. It is a stored fingerprint of a former PIN, made with Argon2id (the deliberately slow function that stretches a PIN) and a salt kept beside it, and a program that can read the record file can test guesses against it on its own processor, with no TPM and no limit on tries. At about 0.11 seconds for one guess on one processor core, every four-digit PIN is tried in about 19 minutes and every six-digit PIN in about 31 hours. A former PIN is not harmless: people choose a new PIN close to the old one, so a former PIN predicts the current one.
+
+1. **Who can do this.** Whoever can read a user's `pin-root.toml`: today the Agent's own user, which includes the face program the Agent starts, and root. The file is not readable by other users.
+2. **Who is not affected.** An installation with `pin.history = 0`, the default, keeps no entries and has nothing to guess. The risk exists only for a person or an administrator who switches the history on.
+3. **What is decided now.** The statement of the earlier amendment is withdrawn, and the policy documentation says that switching `pin.history` on makes the record file more sensitive. The code is not changed by this amendment.
+4. **What is decided later.** The entries should be keyed with something only the TPM holds, such as a keyed hash made with a TPM key, usable only after the current PIN is proved, so that a copy of the file cannot be tested without the TPM. That needs its own design; until it exists, the history stays an opt-in with the trade stated here (linux-hello issue 353).
 
 ### Amendment 2026-11-21 (accepted): when a PIN expires, and what happens then
 
