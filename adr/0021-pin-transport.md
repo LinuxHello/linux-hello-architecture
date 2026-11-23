@@ -142,6 +142,18 @@ In plain words: the Agent writes down when the PIN was last set or changed. When
 
 Not decided here: option B, and the wording of the sentences in the system settings page, which does not exist yet.
 
+### Amendment 2026-11-23 (accepted): the provider never spends the TPM's last try
+
+Decision 5 says the Agent throttles wrong PINs first, per user, so that the TPM's own protection against guessing ([anti-hammering](../arc42/12-glossary.md#anti-hammering)), which keeps one counter of wrong tries for the whole machine, is never reached. Two gaps in that were found by the [security review of 22 November 2026](https://linuxhello.github.io/security-review.html), finding R-02, and this amendment closes them in the TPM provider.
+
+In plain words: the Agent forgets a user's wrong tries after the right PIN, but the TPM's counter only falls with time, one step per lockout interval. A user who types four wrong PINs and then the right one, over and over, never reaches the Agent's limit of five, while the TPM's counter climbs. When it reaches the TPM's limit, the TPM refuses every authorisation of every user until an administrator ends the lockout. Separately, the Agent gives up on a request after 15 seconds and closes the connection, but the provider serves one request at a time and would still make the check later, and the TPM would count a wrong try that the Agent never recorded.
+
+1. **The last try is never spent.** Before it checks or changes a PIN, the provider reads the TPM's counter of wrong tries and its limit, two read-only properties. If one more wrong try would bring the counter to within one of the limit, that is, if `counter + 1` is not below the limit, the provider does not ask the TPM at all, whatever the PIN is, and answers that it could not check. A limit of zero leaves no room. If the provider cannot read the two numbers it goes on as before, and the TPM's own refusal applies.
+2. **How the Agent reads the refusal.** Like any answer of "could not check": it is not a wrong PIN, nothing is counted against the user, and the person is asked for the account password, as when the provider is down ([decision 5 of ADR-0023](0023-pam-module-and-login-failure.md)). The provider does not count it as a failure of the TPM towards its own restart after five failures in a row.
+3. **A request nobody waits for is not made.** After the provider has read a request, it looks at whether the client has closed its end of the connection, which the Agent does when it gives up. If it has, the request is dropped before the TPM is asked. This needs the client to keep the connection open until it has its answer, which the Agent's client does.
+4. **What this does not do.** A person who knows their own PIN can still keep the TPM's counter high with wrong tries that stay below the Agent's limit, because a right PIN does not lower the TPM's counter. PIN checks are then unavailable for everyone for a while, one counted try per lockout interval, and the account password is used instead; the TPM itself is never locked. Making the Agent's own count fall with time like the TPM's, instead of being cleared by a right PIN, would remove that too and is not decided here.
+5. **Tests the code names:** `the_provider_does_not_ask_the_tpm_when_one_more_wrong_try_would_lock_it_for_everyone`, `a_refusal_to_ask_the_tpm_is_not_a_failure_of_the_tpm`, `a_request_whose_client_has_already_gone_is_not_asked_of_the_tpm`, `the_last_try_before_the_limit_is_never_spent`, `the_tpm_reports_its_counter_of_wrong_tries_and_its_limit`.
+
 ## Consequences
 
 **Easier:** the PIN is out of the bus daemon's reach, logs and buffers; one place checks the caller and the subject.
@@ -152,5 +164,6 @@ Not decided here: option B, and the wording of the sentences in the system setti
 - The PIN verifier in the model ([workspace.dsl](../workspace.dsl), `pinVerifier` in `pam_linuxhello`, an edge to the TPM) must change: the PAM module sends the PIN to the Agent and only the Agent talks to the TPM. [Section 5](../arc42/05-building-block-view.md) follows this ADR once accepted.
 - Stretching changes the stored root-key authorisation: existing blobs and the PIN-change flow of [spike 0011](../spikes/0011-tpm-root-key-change-auth.md) need the salt.
 - Not measured: the cost of the key-derivation function on the target hardware and the latency it adds to a `sudo` prompt.
+- The provider keeps the TPM's last try for itself (amendment of 2026-11-23): near the TPM's limit every PIN check is refused for a while, for everyone, and the account password is used. That is the price of never letting the TPM lock for everyone.
 
 **Follow-up:** briefs for the socket and its protocol, the stretching, the sessions, and the properties above; model and arc42 changes after acceptance.
