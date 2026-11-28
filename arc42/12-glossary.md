@@ -16,13 +16,14 @@ Part of the [Arc42 architecture documentation](README.md).
 
 This page explains the words the other pages of the architecture use. Linux Hello sits where several fields meet: passkeys on the web, keys kept in a chip, the way Linux logs a person in, and the KDE Plasma desktop. Few readers know all four, so every term that one of those fields takes for granted is explained here in everyday words, with what Linux Hello uses it for.
 
-The terms are in five groups, alphabetical inside each group:
+The terms are in six groups, alphabetical inside each group:
 
 1. [Passkeys and the web](#passkeys-and-the-web): how a website signs a person in without a password.
 2. [Keys and the TPM](#keys-and-the-tpm): the chip that keeps keys and the words around it.
 3. [The Linux desktop](#the-linux-desktop): the parts of Linux and KDE Plasma that Linux Hello works with.
 4. [Linux Hello's own words](#linux-hellos-own-words): the names of its parts and ideas.
 5. [Words about the documentation](#words-about-the-documentation): how these notes are organised.
+6. [Building and releasing](#building-and-releasing): how a release is built and how a user can check where it came from.
 
 Every term has a heading of its own, so another note can link straight to it, for example `12-glossary.md#relying-party`. A term in *italics* inside an explanation has an entry of its own on this page.
 
@@ -507,3 +508,29 @@ How a page says how far a part has come. **Built and tested**: it exists in the 
 ### Upstream
 
 The other open-source projects that Linux Hello builds on, such as fprintd, Howdy, KeePassXC and KDE Plasma. A change that one of them needs is offered to that project, not kept in a private copy ([section 2](02-constraints.md#c4-changes-to-upstream-go-upstream)).
+
+## Building and releasing
+
+### Attestation
+
+A signed statement about a file or a commit, such as "this file was built by this workflow" or "this commit passed these checks". Linux Hello signs attestations with GitHub's artifact attestations, which use *Sigstore*, and anyone can check them with `gh attestation verify` ([ADR-0006](../adr/0006-attested-quality-gates-and-releases.md)).
+
+### Build provenance
+
+An *attestation* that says where a file came from: which repository, which workflow, which tag and which commit built it. Every file of a Linux Hello release gets one. Without it, a user who downloads a binary has only the website's word for what it is.
+
+### GitHub-hosted runner
+
+A virtual machine that GitHub starts to run one job of a workflow and throws away afterwards. Every quality gate and every release job of Linux Hello runs on one. A *self-hosted runner* is a machine the project runs itself; it never signs anything here ([ADR-0009](../adr/0009-self-hosted-runner.md)).
+
+### SBOM
+
+Software Bill of Materials: a list of every component and dependency inside a program, with its version. Each Linux Hello release ships one in the CycloneDX format, so a user can see whether a known vulnerable library is inside.
+
+### Sigstore
+
+A public service for signing software. Instead of a long-lived key that can be stolen, it issues a short-lived certificate for one workflow run, and it records every signature in a public log. Linux Hello's *attestations* are signed through it.
+
+### SLSA
+
+Supply-chain Levels for Software Artifacts, said "salsa": an OpenSSF specification of how much a user can trust that a file was built from the source it claims. It has a Build track and a Source track, each with numbered levels; a level is met when every requirement up to it is met. Linux Hello's releases claim Build level 3 and Source level 1 ([ADR-0006](../adr/0006-attested-quality-gates-and-releases.md), amendment of 2026-11-28, proposed).
