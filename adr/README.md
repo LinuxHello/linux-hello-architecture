@@ -19,7 +19,7 @@ An architecture decision record (ADR) is a short note that records one decision 
 - [ADR-0003: Destructive reset, no recovery key](0003-destructive-reset.md): a forgotten PIN is reset by deleting the user's keys; there is no recovery key.
 - [ADR-0004: Roles of the coding agents](0004-agent-roles.md): which AI agent writes, reviews and documents, and that the maintainer decides and merges.
 - [ADR-0005: How providers attach: a virtual CTAP authenticator, no credentialsd](0005-provider-path.md): Linux Hello appears to browsers as a USB security key created in software, with the key stores behind it.
-- [ADR-0006: Attested quality gates and releases](0006-attested-quality-gates-and-releases.md) (accepted): which CI checks every commit must pass, and how releases are signed.
+- [ADR-0006: Attested quality gates and releases](0006-attested-quality-gates-and-releases.md) (accepted): which CI checks every commit must pass, and how releases are signed; the amendment of 2026-11-28 (proposed) states that releases reach SLSA Build level 3 and the repository Source level 1.
 - [ADR-0007: Unattended agent loops](0007-unattended-agent-loops.md) (proposed): the AI agents may run in loops, sharing state only through GitHub issues.
 - [ADR-0008: Code documentation mapped to the C4 model](0008-code-documentation-mapped-to-c4.md) (accepted): every piece of code is documented and names the C4 part it implements.
 - [ADR-0009: A self-hosted runner on the maintainer's workstation](0009-self-hosted-runner.md) (proposed): some CI jobs run on the maintainer's workstation, none of them required.
